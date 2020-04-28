@@ -1,7 +1,7 @@
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable( example example.cpp f_simple.sc v_simple.sc )
+add_executable( example Example.cpp f_simple.sc v_simple.sc )
 target_include_directories( example PUBLIC include )
 target_link_libraries( example JuicyPixels)
 set_target_properties( example PROPERTIES FOLDER "projects" )
