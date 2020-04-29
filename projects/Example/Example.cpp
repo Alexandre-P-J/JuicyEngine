@@ -3,6 +3,8 @@
 #include <spdlog/spdlog.h>
 #include <iostream>
 
+#include <sol/sol.hpp>
+
 class Mygame : public Game {
     std::shared_ptr<Sprite> a = std::shared_ptr<Sprite>(new Sprite());
     Sprite b;

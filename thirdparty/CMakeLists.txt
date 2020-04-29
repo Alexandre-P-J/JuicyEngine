@@ -16,4 +16,10 @@ if (SDL2STATIC)
 endif()
 
 # spdlog
-add_subdirectory( spdlog )
+add_subdirectory(spdlog)
+
+# lua
+add_subdirectory(lua-5.3.5)
+
+# sol2 (sol v3)
+add_subdirectory(sol2)

@@ -1,8 +1,6 @@
 #include <ResourceManager.h>
 #include <spdlog/spdlog.h>
-
-const std::string ResourceManager::shader_dir = "shaders";
-
+namespace fs = std::filesystem;
 
 
 std::shared_ptr<ResourceManager> ResourceManager::get_instance() {
@@ -12,8 +10,11 @@ std::shared_ptr<ResourceManager> ResourceManager::get_instance() {
 
 
 
-std::optional<bgfx::ShaderHandle> ResourceManager::loadShader(const std::string& name) {
-    auto path = get_shaders_path() + name;
+std::optional<bgfx::ShaderHandle>
+ResourceManager::loadShader(const std::string& relative_path) {
+    fs::path aux = fs::path(relative_path);
+    fs::path path = fs::path(data_dir) / aux.remove_filename() /
+                    get_shaders_subdir() / aux.filename();
     std::ifstream file(path, std::ifstream::binary);
     if (file) {
         file.seekg(0, file.end);
@@ -32,59 +33,62 @@ std::optional<bgfx::ShaderHandle> ResourceManager::loadShader(const std::string&
             return handle;
         } else {
             delete[] buffer;
-            spdlog::warn("Error reading " + path);
-            return std::nullopt;// file read problem
+            spdlog::warn("Error reading " + std::string(path));
+            return std::nullopt; // file read problem
         }
     }
-    spdlog::warn("Error opening " + path);
+    spdlog::warn("Error opening " + std::string(path));
     return std::nullopt; // file open problem
 }
 
 
 
-std::string ResourceManager::get_shaders_path() {
-    std::string subdir;
+std::filesystem::path ResourceManager::get_shaders_subdir() {
+    std::filesystem::path subdir;
     switch (bgfx::getRendererType()) {
         case bgfx::RendererType::Noop:
         case bgfx::RendererType::Direct3D9:
-            subdir = "/dx9/";
+            subdir = fs::path("dx9");
             break;
         case bgfx::RendererType::Direct3D11:
         case bgfx::RendererType::Direct3D12:
-            subdir = "/dx11/";
+            subdir = fs::path("dx11");
             break;
         case bgfx::RendererType::Gnm:
             break;
         case bgfx::RendererType::Metal:
-            subdir = "/metal/";
+            subdir = fs::path("metal");
             break;
         case bgfx::RendererType::OpenGL:
-            subdir = "/glsl/";
+            subdir = fs::path("glsl");
             break;
         case bgfx::RendererType::OpenGLES:
-            subdir = "/essl/";
+            subdir = fs::path("essl");
             break;
         case bgfx::RendererType::Vulkan:
-            subdir = "/spirv/";
+            subdir = fs::path("spirv");
             break;
         case bgfx::RendererType::Count:
             break;
     }
-    return shader_dir + subdir;
+    return fs::path(shaders_partial_path) / subdir;
 }
 
 
 
-std::optional<bgfx::ProgramHandle> ResourceManager::loadShaderProgram(const std::string& vs_name,
-                                                               const std::string& fs_name) {
+std::optional<bgfx::ProgramHandle>
+ResourceManager::loadShaderProgram(const std::string& vs_name,
+                                   const std::string& fs_name) {
     auto vs = loadShader(vs_name);
     if (vs) {
         auto fs = loadShader(fs_name);
         if (fs) {
-            bgfx::ProgramHandle shader_program = bgfx::createProgram(vs.value(), fs.value());
+            bgfx::ProgramHandle shader_program =
+                bgfx::createProgram(vs.value(), fs.value());
             return shader_program;
         } else {
-            spdlog::warn("Fragment shader " + fs_name + " could not be loaded.");
+            spdlog::warn("Fragment shader " + fs_name +
+                         " could not be loaded.");
         }
     } else {
         spdlog::warn("Vertex shader " + vs_name + " could not be loaded.");
