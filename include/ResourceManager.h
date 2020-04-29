@@ -26,8 +26,8 @@ class ResourceManager {
 
 public:
     static std::shared_ptr<ResourceManager> get_instance();
-    std::optional<bgfx::ShaderHandle> loadShader(const std::string& name);
+    std::optional<bgfx::ShaderHandle> load_shader(const std::string& name);
     std::optional<bgfx::ProgramHandle>
-    loadShaderProgram(const std::string& vs_name, const std::string& fs_name);
+    load_shader_program(const std::string& vs_name, const std::string& fs_name);
     std::optional<std::string> load_text(const std::string& path);
 };

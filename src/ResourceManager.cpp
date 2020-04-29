@@ -11,11 +11,11 @@ std::shared_ptr<ResourceManager> ResourceManager::get_instance() {
 
 
 std::optional<bgfx::ShaderHandle>
-ResourceManager::loadShader(const std::string& relative_path) {
-    fs::path aux = fs::path(relative_path);
-    fs::path path = fs::path(data_dir) / aux.remove_filename() /
-                    get_shaders_subdir() / aux.filename();
-    std::ifstream file(path, std::ifstream::binary);
+ResourceManager::load_shader(const std::string& path) {
+    fs::path aux = fs::path(path);
+    fs::path sh_path = fs::path(data_dir) / aux.remove_filename() /
+                       get_shaders_subdir() / aux.filename();
+    std::ifstream file(sh_path, std::ifstream::binary);
     if (file) {
         file.seekg(0, file.end);
         size_t length = file.tellg();
@@ -29,15 +29,15 @@ ResourceManager::loadShader(const std::string& relative_path) {
             file.close();
             mem->data[mem->size - 1] = '\0';
             bgfx::ShaderHandle handle = bgfx::createShader(mem);
-            bgfx::setName(handle, path.c_str());
+            bgfx::setName(handle, sh_path.c_str());
             return handle;
         } else {
             delete[] buffer;
-            spdlog::warn("Error reading " + std::string(path));
+            spdlog::warn("Error reading " + std::string(sh_path));
             return std::nullopt; // file read problem
         }
     }
-    spdlog::warn("Error opening " + std::string(path));
+    spdlog::warn("Error opening " + std::string(sh_path));
     return std::nullopt; // file open problem
 }
 
@@ -77,21 +77,34 @@ std::filesystem::path ResourceManager::get_shaders_subdir() {
 
 
 std::optional<bgfx::ProgramHandle>
-ResourceManager::loadShaderProgram(const std::string& vs_name,
-                                   const std::string& fs_name) {
-    auto vs = loadShader(vs_name);
+ResourceManager::load_shader_program(const std::string& vs_path,
+                                     const std::string& fs_path) {
+    auto vs = load_shader(vs_path);
     if (vs) {
-        auto fs = loadShader(fs_name);
+        auto fs = load_shader(fs_path);
         if (fs) {
             bgfx::ProgramHandle shader_program =
                 bgfx::createProgram(vs.value(), fs.value());
             return shader_program;
         } else {
-            spdlog::warn("Fragment shader " + fs_name +
+            spdlog::warn("Fragment shader " + fs_path +
                          " could not be loaded.");
         }
     } else {
-        spdlog::warn("Vertex shader " + vs_name + " could not be loaded.");
+        spdlog::warn("Vertex shader " + vs_path + " could not be loaded.");
+    }
+    return std::nullopt;
+}
+
+
+
+std::optional<std::string> ResourceManager::load_text(const std::string& path) {
+    std::ifstream file(path);
+    if (file) {
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        file.close();
+        return buffer.str();
     }
     return std::nullopt;
 }

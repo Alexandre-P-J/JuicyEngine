@@ -32,7 +32,7 @@ void Sprite::init_default_handlers() {
     static const uint16_t indices[] = {0, 3, 2, 2, 1, 0};
     default_indexes =
         bgfx::createIndexBuffer(bgfx::makeRef(indices, sizeof(indices)));
-    auto sp = ResourceManager::get_instance()->loadShaderProgram(
+    auto sp = ResourceManager::get_instance()->load_shader_program(
         "basic/v_simple.bin", "basic/f_simple.bin");
     if (sp) {
         default_shader_program = sp.value();
