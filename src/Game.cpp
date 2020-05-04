@@ -1,5 +1,6 @@
 #include <Game.h>
 
+
 void Game::update() {
     pre_update();
     if (root) {

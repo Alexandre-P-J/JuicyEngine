@@ -26,14 +26,14 @@ endif()
 # Engine
 file(GLOB ENGINE_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp") # Engine sources
 add_library(JuicyPixels STATIC "${ENGINE_SOURCES}")
-target_include_directories(JuicyPixels PUBLIC include) # Engine headers
+target_include_directories(JuicyPixels PUBLIC src) # Engine headers
 target_compile_definitions(JuicyPixels PRIVATE RESOURCES_FOLDER="data" SHADERS_PARTIAL_PATH="shaders")
 
 # Engine Linking
 if (SDL2STATIC)
-	target_link_libraries( JuicyPixels PUBLIC bgfx glm spdlog lua sol2 SDL2-static) # sdl2 static may be changed
+	target_link_libraries(JuicyPixels PUBLIC bgfx glm spdlog lua sol2 SDL2-static) # sdl2 static may be changed
 else()
 	include_directories("${CMAKE_SOURCE_DIR}/thirdparty/SDL2/include")
-	target_link_libraries( JuicyPixels PUBLIC bgfx glm spdlog lua sol2 SDL2)
+	target_link_libraries(JuicyPixels PUBLIC bgfx glm spdlog lua sol2 SDL2)
 endif()
 

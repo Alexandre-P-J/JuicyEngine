@@ -98,13 +98,30 @@ ResourceManager::load_shader_program(const std::string& vs_path,
 
 
 
-std::optional<std::string> ResourceManager::load_text(const std::string& path) {
-    std::ifstream file(path);
+std::shared_ptr<std::string> ResourceManager::load_text(const std::string& path) {
+    auto stored = resources.find(path);
+    if (stored != resources.end()) {
+        try {
+            auto wp = std::get<std::weak_ptr<std::string>>(stored->second);
+            if (auto sp = wp.lock()) {
+                return sp;
+            }
+        }
+        catch (const std::bad_variant_access&) {
+            spdlog::warn("Tried to load in-memory resource "+path+", but it wasn't a text! Reloading from disk");
+        }
+        resources.erase(stored);
+    }
+    fs::path tx_path = fs::path(data_dir) / fs::path(path);
+    std::ifstream file(tx_path);
     if (file) {
         std::stringstream buffer;
         buffer << file.rdbuf();
         file.close();
-        return buffer.str();
+        auto result = std::make_shared<std::string>(buffer.str());
+        resources[path] = std::variant<std::weak_ptr<std::string>>(result);
+        return result;
     }
-    return std::nullopt;
+    spdlog::warn(std::string(tx_path)+" couldn't be loaded.");
+    return std::shared_ptr<std::string>(nullptr);
 }

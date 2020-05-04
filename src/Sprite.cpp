@@ -1,11 +1,8 @@
 #include <ResourceManager.h>
 #include <Sprite.h>
 #include <VertexLayouts.h>
-#include <iostream>
 #include <spdlog/spdlog.h>
-#include <vector>
-
-
+#include "Scripting.h"
 
 bgfx::VertexBufferHandle Sprite::default_vertices = BGFX_INVALID_HANDLE;
 bgfx::IndexBufferHandle Sprite::default_indexes = BGFX_INVALID_HANDLE;
@@ -49,4 +46,10 @@ void Sprite::draw() {
     render->set_current_transform(transform, -100);
     render->set_current_buffers(default_vertices, default_indexes);
     render->submit_current(default_shader_program);
+
+    if (auto script = ResourceManager::get_instance()->load_text("test.lua")) {
+        auto script_manager = Scripting::get_instance();
+        script_manager->run_script(this, *script);
+    }
+    
 }
