@@ -11,6 +11,7 @@ protected:
     std::weak_ptr<Node> parent;
     std::vector<std::shared_ptr<Node>> children;
     int z_index = 0;
+    std::shared_ptr<std::string> script;
 
 public:
     Node();
@@ -34,4 +35,8 @@ public:
     void propagate_update();
     virtual void update() {}
     virtual void draw() {}
+    inline void attach_script(std::shared_ptr<std::string> code) {
+        script = code;
+    }
+    inline void detach_script() { script.reset(); }
 };
