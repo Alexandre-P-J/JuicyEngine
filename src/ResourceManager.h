@@ -8,10 +8,10 @@
 #include <variant>
 
 #ifndef SHADERS_PARTIAL_PATH
-#define SHADERS_PARTIAL_PATH "shaders"
+#define SHADERS_PARTIAL_PATH "shaders"  // fallback
 #endif
 #ifndef RESOURCES_FOLDER
-#define RESOURCES_FOLDER "data"
+#define RESOURCES_FOLDER "data"  // fallback
 #endif
 
 template<class T>

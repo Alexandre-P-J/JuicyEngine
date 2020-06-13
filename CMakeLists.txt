@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Settings
 option(SDL2STATIC "Build SDL2 statically" ON)
+set(RESOURCES_DIR "data" CACHE STRING "resources folder")
+set(SHADERS_SUBDIR "shaders" CACHE STRING "shaders parent folder")
 
 # Thirdparty and game projects
 add_subdirectory(thirdparty)
@@ -16,6 +18,9 @@ include(thirdparty/bgfx.cmake/cmake/util/ConfigureDebugging.cmake)
 file(GLOB ENGINE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp") # Engine sources
 add_library(JuicyPixels STATIC "${ENGINE_SOURCES}")
 target_include_directories(JuicyPixels PUBLIC src) # Engine headers
+
+# Preprocessor
+target_compile_definitions(JuicyPixels PRIVATE RESOURCES_FOLDER="${RESOURCES_DIR}" SHADERS_PARTIAL_PATH="${SHADERS_SUBDIR}")
 
 # Engine Linking
 if (SDL2STATIC)
