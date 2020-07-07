@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 
 # Compiler stuff
-project(JuicyPixels)
+project(JuicyEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -30,16 +30,16 @@ include(thirdparty/bgfx.cmake/cmake/util/ConfigureDebugging.cmake)
 
 # Engine
 file(GLOB ENGINE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp") # Engine sources
-add_library(JuicyPixels STATIC "${ENGINE_SOURCES}")
-target_include_directories(JuicyPixels PUBLIC src) # Engine headers
+add_library(JuicyEngine STATIC "${ENGINE_SOURCES}")
+target_include_directories(JuicyEngine PUBLIC src) # Engine headers
 
 # Preprocessor
-target_compile_definitions(JuicyPixels PRIVATE RESOURCES_FOLDER="${RESOURCES_DIR}" SHADERS_PARTIAL_PATH="${SHADERS_SUBDIR}")
+target_compile_definitions(JuicyEngine PRIVATE RESOURCES_FOLDER="${RESOURCES_DIR}" SHADERS_PARTIAL_PATH="${SHADERS_SUBDIR}")
 
 # Engine Linking
 if (SDL2STATIC)
-	target_link_libraries(JuicyPixels PUBLIC bgfx glm spdlog lua sol2 SDL2-static) # sdl2 static may be changed
+	target_link_libraries(JuicyEngine PUBLIC bgfx glm spdlog lua sol2 SDL2-static) # sdl2 static may be changed
 else()
 	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SDL2/include")
-	target_link_libraries(JuicyPixels PUBLIC bgfx glm spdlog lua sol2 SDL2)
+	target_link_libraries(JuicyEngine PUBLIC bgfx glm spdlog lua sol2 SDL2)
 endif()

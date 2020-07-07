@@ -10,7 +10,7 @@ std::shared_ptr<Renderer> Renderer::get_instance() {
 
 
 Renderer::Renderer() {
-    window = SDL_CreateWindow("JuicyPixels", SDL_WINDOWPOS_UNDEFINED,
+    window = SDL_CreateWindow("JuicyEngine", SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED, w_width, w_height,
                               SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (!window) {

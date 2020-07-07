@@ -1,4 +1,4 @@
-# JuicyPixels Game Engine
+# JuicyEngine
 
 ## What's the scope of this engine
 This is a game engine in the form of a framework, this means that its distributed without an editor by design and its intended to be used by programmers.
@@ -10,6 +10,19 @@ because there are other alternatives for 3D and its imposible to compete against
 
 This project aims to be simple, easy to extend and with portability to consoles in mind.
 
-## How to use this engine
+## Engine Developers: Get the standalone engine
+Clone this repository and run:
+```bash
+git submodule update --init --recursive --jobs 8
+```
+This will download the latest version of the engine.
+
+If you already did this but you want to update the engine
+simply run this instead:
+```bash
+git pull --recurse-submodules
+```
+
+## How to use this engine for a game
 This repository is designed to be added as a submodule in your game repository.
-A CMakeLists.txt shall be provided by your game to link against the engine as you can see in this [Example Project](https://github.com/CallMeLemon/JuicyPixels_Example_Project).
+A CMakeLists.txt shall be provided by your game to link against the engine as you can see in this [Example Project](https://github.com/CallMeLemon/JuicyEngine_Example_Project).
