@@ -20,7 +20,7 @@ This will download the latest version of the engine.
 If you already did this but you want to update the engine
 simply run this instead:
 ```bash
-git submodule foreach --recursive git pull origin HEAD
+git submodule foreach git pull origin HEAD
 ```
 
 ## How to use this engine for a game
