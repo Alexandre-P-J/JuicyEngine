@@ -1,14 +1,28 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.2)
 
 # Compiler stuff
 project(JuicyPixels)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Settings
-option(SDL2STATIC "Build SDL2 statically" ON)
+# SETTINGS
+# Paths
 set(RESOURCES_DIR "data" CACHE STRING "resources folder")
 set(SHADERS_SUBDIR "shaders" CACHE STRING "shaders parent folder")
+# API
+option(BGFX_BUILD_TOOLS      "Build bgfx tools."                             ON) # required to build shaders
+option(BGFX_BUILD_EXAMPLES   "Build bgfx examples."                          OFF)
+option(BGFX_INSTALL          "Create installation target."                   OFF)
+option(BGFX_INSTALL_EXAMPLES "Install examples and their runtimes."          OFF)
+option(BGFX_CUSTOM_TARGETS   "Include convenience custom targets."           OFF)
+option(BGFX_USE_OVR          "Build with OVR support."                       OFF)
+option(BGFX_AMALGAMATED      "Amalgamated bgfx build for faster compilation" OFF)
+option(BX_AMALGAMATED        "Amalgamated bx build for faster compilation"   OFF)
+option(BGFX_CONFIG_DEBUG     "Enables debug configuration on all builds"     OFF)
+option(BGFX_USE_DEBUG_SUFFIX "Add 'd' suffix to debug output targets"        OFF)
+set(BGFX_OPENGL_VERSION  "" CACHE STRING "Specify minimum opengl version" )
+# SDL2
+option(SDL2STATIC "Build SDL2 statically" ON)
 
 # Thirdparty and game projects
 add_subdirectory(thirdparty)

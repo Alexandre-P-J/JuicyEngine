@@ -48,7 +48,6 @@ public:
     ~Renderer();
     static std::shared_ptr<Renderer> get_instance();
     void resize_window(int width, int height);
-
     void set_active_camera(std::shared_ptr<Camera> camera);
     void set_current_transform(glm::mat4 transform, int z_index);
     void set_current_buffers(bgfx::VertexBufferHandle v,

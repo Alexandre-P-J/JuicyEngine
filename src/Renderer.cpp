@@ -43,7 +43,7 @@ Renderer::Renderer() {
 
     bgfx::setPlatformData(pd);
     bgfx::Init init;
-    init.type = bgfx::RendererType::Count; // Automatically choose a renderer.
+    init.type = bgfx::RendererType::Enum::Count;
     init.resolution.width = w_width;
     init.resolution.height = w_height;
     init.resolution.reset = BGFX_RESET_VSYNC;
