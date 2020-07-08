@@ -23,3 +23,6 @@ add_subdirectory(lua-5.3.5)
 
 # sol2 (sol v3)
 add_subdirectory(sol2)
+
+# EnTT
+add_subdirectory(EnTT)
