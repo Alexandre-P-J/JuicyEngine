@@ -1,10 +1,11 @@
 #pragma once
-#include "Renderer.h"
-#include "Game.h"
+#include <Systems/RenderSystem.h>
 #include <memory>
+#include "Game.h"
 
+namespace JuicyEngine {
 class Engine {
-    std::shared_ptr<Renderer> renderer;
+    RenderSystem renderer;
     std::shared_ptr<Game> game;
     bool running = false;
 
@@ -15,3 +16,4 @@ public:
     static std::shared_ptr<Engine> get_instance();
     void run(Game* game);
 };
+}  // namespace JuicyEngine

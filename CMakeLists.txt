@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.2)
 project(JuicyEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 
 # SETTINGS
 # Paths
@@ -29,9 +30,9 @@ add_subdirectory(thirdparty)
 include(thirdparty/bgfx.cmake/cmake/util/ConfigureDebugging.cmake)
 
 # Engine
-file(GLOB ENGINE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp") # Engine sources
+file(GLOB_RECURSE ENGINE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp") # Engine sources
 add_library(JuicyEngine STATIC "${ENGINE_SOURCES}")
-target_include_directories(JuicyEngine PUBLIC src) # Engine headers
+target_include_directories(JuicyEngine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src") # Engine headers
 
 # Preprocessor
 target_compile_definitions(JuicyEngine PRIVATE RESOURCES_FOLDER="${RESOURCES_DIR}" SHADERS_PARTIAL_PATH="${SHADERS_SUBDIR}")
