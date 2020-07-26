@@ -2,63 +2,67 @@
 #include <spdlog/spdlog.h>
 
 #include <Components/LensComponent.h>
-#include <Components/TransformComponent.h>
 #include <Components/RenderComponent.h>
-#include "ResourceManager.h"
+#include <Components/TransformComponent.h>
+#include <Systems/RenderSystem.h>
 #include <VertexLayouts.h>
 #include <bx/math.h>
 #include <glm/glm.hpp>
-#include <Systems/System.h>
+#include "ResourceManager.h"
 
 JuicyEngine::Engine::Engine() {
-    SDL_Init(0);
+    SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_VIDEO |
+             SDL_INIT_EVENTS);
+    if (auto err = SDL_GetError(); err != nullptr && err[0] != '\0') {
+        spdlog::warn(err);
+    }
+    w_manager = std::shared_ptr<JuicyEngine::WindowManager>(
+        new JuicyEngine::WindowManager());
+    i_manager = std::shared_ptr<JuicyEngine::InputManager>(
+        new JuicyEngine::InputManager());
 }
 
-
-
-
 JuicyEngine::Engine::~Engine() {
+    systems.clear();
+    w_manager.reset();
+    i_manager.reset();
     SDL_Quit();
 }
 
-
-
-std::shared_ptr<JuicyEngine::Engine> JuicyEngine::Engine::get_instance() {
-    static std::shared_ptr<JuicyEngine::Engine> ptr(new Engine);
-    return ptr;
+JuicyEngine::Engine& JuicyEngine::Engine::instance() {
+    static auto inst = JuicyEngine::Engine();
+    return inst;
 }
 
-
-
-
 void JuicyEngine::Engine::run(Game* game_ptr) {
-    auto test = JuicyEngine::System::create("RenderSystem");
     if (running) {
         spdlog::warn("Do not call JuicyEngine::Engine::run() multiple times!");
         return;
     }
     running = true;
+    // systems should be initialized outside constructor just in case they use
+    // the instance function
+    systems = SystemFactory::create_all();
     game = std::shared_ptr<Game>(game_ptr);
-    
-    //TEST START
-    
+
+    // TEST START
+
     auto&& registry = game->get_scene();
     auto camera = registry.create();
     registry.emplace<TransformComponent>(camera);
     registry.emplace<LensComponent>(camera);
-    
+
     auto obj = registry.create();
-    //glm::mat4 test;
-    //bx::Vec3 eye = {0.f, 0.f, -1.f};
-    //bx::Vec3 at = {0.f, 0.f, 1.f};
-    //bx::mtxLookAt(&test[0][0], eye, at);
+    // glm::mat4 test;
+    // bx::Vec3 eye = {0.f, 0.f, -1.f};
+    // bx::Vec3 at = {0.f, 0.f, 1.f};
+    // bx::mtxLookAt(&test[0][0], eye, at);
     registry.emplace<TransformComponent>(obj);
-    
-    
+
     PosColorVertex vertices[] = {{25.0f, 25.0f, 5.0f, 0xff0000ff},
-                                        {25.0f, -25.0f, 0.0f, 0xff00ffff},
-                                        {-25.0f, -25.0f, 0.0f, 0xffff0000},
-                                        {-25.0f, 25.0f, 0.0f, 0xff00ff00}};
+                                 {25.0f, -25.0f, 0.0f, 0xff00ffff},
+                                 {-25.0f, -25.0f, 0.0f, 0xffff0000},
+                                 {-25.0f, 25.0f, 0.0f, 0xff00ff00}};
     auto verticesh = bgfx::createVertexBuffer(
         bgfx::makeRef(vertices, sizeof(vertices)), PosColorVertex::ms_layout);
 
@@ -70,17 +74,19 @@ void JuicyEngine::Engine::run(Game* game_ptr) {
         "basic/v_simple.bin", "basic/f_simple.bin");
     if (sp) {
         shaderh = sp.value();
-    } else
+    }
+    else
         spdlog::critical("Default sprite shader couldn't be loaded!");
-    
-    
-    registry.emplace<RenderComponent>(obj, verticesh, indicesh, shaderh);  
-    
-    //TEST END
 
+    registry.emplace<RenderComponent>(obj, verticesh, indicesh, shaderh);
 
-    while(running) {
+    // TEST END
+    while (running) {
+        i_manager->refresh_input();
+        i_manager->test();
         game->update();
-        renderer.update(game->get_scene());
+        for (auto& system : systems) {
+            system->update(game->get_scene());
+        }
     }
 }

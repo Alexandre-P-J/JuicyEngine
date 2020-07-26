@@ -1,9 +1,13 @@
 #include <WindowManager.h>
+
+#include <Engine.h>
 #include <spdlog/spdlog.h>
 
-
-
-Engine::WindowManager::WindowManager() {
+JuicyEngine::WindowManager::WindowManager() {
+    if (!SDL_WasInit(SDL_INIT_VIDEO)) {
+        spdlog::critical(
+            "SDL_VIDEO not initialized before WindowManager construction");
+    }
     window = SDL_CreateWindow("JuicyEngine", x, y, width, height, window_flags);
     if (!window) {
         spdlog::critical("SDL2 Window creation failed.");
@@ -46,8 +50,7 @@ Engine::WindowManager::WindowManager() {
     bgfx::setPlatformData(pd);
 }
 
-
-Engine::WindowManager::~WindowManager() {
+JuicyEngine::WindowManager::~WindowManager() {
     if (!window) {
         return;
     }
@@ -61,10 +64,20 @@ Engine::WindowManager::~WindowManager() {
     }
     #endif
 #endif
+
     SDL_DestroyWindow(window);
 }
 
+void JuicyEngine::WindowManager::process(WindowEvent event) {
+    switch (event) {
+        case WindowEvent::close:
+            Engine::instance().exit();
+            break;
+        default:
+            break;
+    }
+}
 
-void Engine::WindowManager::resize(uint16_t width, uint16_t height) {
+void JuicyEngine::WindowManager::resize(uint16_t width, uint16_t height) {
     SDL_SetWindowSize(window, width, height);
 }

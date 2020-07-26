@@ -16,3 +16,6 @@
 [submodule "thirdparty/EnTT"]
 	path = thirdparty/EnTT
 	url = git@github.com:skypjack/entt.git
+[submodule "thirdparty/cereal"]
+	path = thirdparty/cereal
+	url = git@github.com:USCiLab/cereal.git

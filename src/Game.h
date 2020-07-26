@@ -3,10 +3,9 @@
 #include <entt/entt.hpp>
 
 class Game {
-    friend class Engine;
-
     entt::registry current_scene;
     
+    public:
     entt::registry& get_scene();
     void set_scene(entt::registry& scene);
     

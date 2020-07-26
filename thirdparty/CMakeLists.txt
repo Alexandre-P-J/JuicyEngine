@@ -26,3 +26,9 @@ add_subdirectory(sol2)
 
 # EnTT
 add_subdirectory(EnTT)
+
+# cereal
+option(SKIP_PORTABILITY_TEST "Skip portability (32 bit) tests" ON)
+option(SKIP_PERFORMANCE_COMPARISON "Skip building performance comparison (requires boost)" ON)
+option(JUST_INSTALL_CEREAL "Don't do anything besides installing the library" ON)
+add_subdirectory(cereal)
