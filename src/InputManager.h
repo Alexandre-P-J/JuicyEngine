@@ -18,7 +18,6 @@ class InputManager {
 
 public:
     void refresh_input();
-    void test();
     std::queue<Event>& get_events();
 };
 }  // namespace JuicyEngine

@@ -7,4 +7,10 @@ struct RenderComponent {
     bgfx::IndexBufferHandle indexes;
     bgfx::ProgramHandle shader;
     std::vector<bgfx::UniformHandle> uniforms;
+    
+    template<class Archive>
+    void serialize(Archive & ar) {
+        ar(666);
+    }
+
 };

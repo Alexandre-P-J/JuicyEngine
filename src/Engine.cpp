@@ -10,6 +10,18 @@
 #include <glm/glm.hpp>
 #include "ResourceManager.h"
 
+#include <sstream>
+#include <vector>
+#undef Bool // X11, ...
+#include <cereal/archives/json.hpp>
+#include <entt/entity/registry.hpp>
+#include <entt/entity/snapshot.hpp>
+#include <entt/entity/helper.hpp>
+#include <fstream>
+#include <Components/LensComponent.h>
+#include <Components/RenderComponent.h>
+#include <Components/TransformComponent.h>
+
 JuicyEngine::Engine::Engine() {
     SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_VIDEO |
              SDL_INIT_EVENTS);
@@ -83,10 +95,16 @@ void JuicyEngine::Engine::run(Game* game_ptr) {
     // TEST END
     while (running) {
         i_manager->refresh_input();
-        i_manager->test();
         game->update();
         for (auto& system : systems) {
             system->update(game->get_scene());
         }
+    }
+
+    //std::stringstream storage;
+    std::ofstream os("cereal.json");
+    {
+        cereal::JSONOutputArchive output{os};
+        entt::snapshot{registry}.component<TransformComponent>(output);
     }
 }
