@@ -1,8 +1,13 @@
 #pragma once
+#include <Components/Component.h>
+#include <Components/SerializationComponent.h>
+#include <spdlog/spdlog.h>
 #include <cereal/cereal.hpp>
 #include <cereal/types/vector.hpp>
+#include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include "entt/entity/fwd.hpp"
 
 namespace glm {
 
@@ -93,3 +98,27 @@ void serialize(Archive& archive, glm::dquat& q) {
 }
 
 }  // namespace glm
+
+namespace entt {
+struct serializable_entity {
+    entt::entity const& entity;
+    entt::registry const& registry;
+};
+
+template <class Archive>
+void serialize(Archive& archive, entt::registry& r) {
+    auto view = r.view<SerializationComponent>();
+    for (auto& entity : view) {
+        auto& name = view.get<SerializationComponent>(entity).entity_name;
+        archive(cereal::make_nvp(name, serializable_entity{entity, r}));
+    }
+}
+
+template <class Archive>
+void serialize(Archive& archive, serializable_entity& e) {
+    e.registry.visit(e.entity, [&archive, &e](const auto component) {
+            spdlog::info(ComponentFactory::get_from_id(component, e.registry, e.entity)->get_name());
+    });
+}
+
+}  // namespace entt

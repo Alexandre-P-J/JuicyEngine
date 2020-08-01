@@ -21,6 +21,8 @@
 #include <Components/LensComponent.h>
 #include <Components/RenderComponent.h>
 #include <Components/TransformComponent.h>
+#include <Components/SerializationComponent.h>
+#include <Serialization.h>
 
 JuicyEngine::Engine::Engine() {
     SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_VIDEO |
@@ -90,7 +92,12 @@ void JuicyEngine::Engine::run(Game* game_ptr) {
     else
         spdlog::critical("Default sprite shader couldn't be loaded!");
 
-    registry.emplace<RenderComponent>(obj, verticesh, indicesh, shaderh);
+    auto r = RenderComponent();
+    r.vertices = verticesh;
+    r.indexes = indicesh;
+    r.shader = shaderh;
+    registry.emplace<RenderComponent>(obj, r);
+    registry.emplace<SerializationComponent>(obj);
 
     // TEST END
     while (running) {
@@ -103,8 +110,14 @@ void JuicyEngine::Engine::run(Game* game_ptr) {
 
     //std::stringstream storage;
     std::ofstream os("cereal.json");
+    //auto vew = registry.view<TransformComponent>();
+    //for (auto& e : vew) {
+        //spdlog::warn("ENTT");
+        //registry.visit(e, [](const auto component) {spdlog::info("Visit");});
+    //}
     {
         cereal::JSONOutputArchive output{os};
-        entt::snapshot{registry}.component<TransformComponent>(output);
+        output(cereal::make_nvp("Scene", registry));
+        //entt::snapshot{registry}.component<TransformComponent>(output);
     }
 }
