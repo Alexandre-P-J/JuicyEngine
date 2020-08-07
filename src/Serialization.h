@@ -2,12 +2,16 @@
 #include <Components/Component.h>
 #include <Components/SerializationComponent.h>
 #include <spdlog/spdlog.h>
+#undef Bool
+#include <cereal/archives/json.hpp>
+#include <cereal/archives/portable_binary.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/vector.hpp>
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include "entt/entity/fwd.hpp"
+#include <spdlog/spdlog.h>
 
 namespace glm {
 
@@ -106,7 +110,7 @@ struct serializable_entity {
 };
 
 template <class Archive>
-void serialize(Archive& archive, entt::registry& r) {
+void save(Archive& archive, entt::registry& r) {
     auto view = r.view<SerializationComponent>();
     for (auto& entity : view) {
         auto& name = view.get<SerializationComponent>(entity).entity_name;
@@ -114,11 +118,35 @@ void serialize(Archive& archive, entt::registry& r) {
     }
 }
 
+struct loadable_entity {
+};
+
+
 template <class Archive>
-void serialize(Archive& archive, serializable_entity& e) {
+void serialize(Archive& archive, loadable_entity& entity) {
+    spdlog::warn("TEST");
+}
+
+template <class Archive>
+void load(Archive& archive, entt::registry& r) {
+    try {
+        while (true) {
+            loadable_entity e;
+            archive(e);
+        }
+    }
+    catch(std::exception e) {}
+    
+}
+
+template <class Archive>
+void save(Archive& archive, serializable_entity const& e) {
     e.registry.visit(e.entity, [&archive, &e](const auto component) {
-            spdlog::info(ComponentFactory::get_from_id(component, e.registry, e.entity)->get_name());
+        ComponentFactory::save(archive, component, e.registry, e.entity);
     });
 }
+
+template <class Archive>
+void load(Archive& archive, serializable_entity const& e) {}
 
 }  // namespace entt

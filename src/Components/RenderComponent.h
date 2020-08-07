@@ -11,8 +11,10 @@ struct RenderComponent : public ComponentRegistry<RenderComponent> {
     std::vector<bgfx::UniformHandle> uniforms;
 
     template <class Archive>
-    void serialize(Archive& ar) {
-        ar(666);
+    void save(Archive& ar) const {
+        ar(cereal::make_nvp("Render", 666));
     }
+    template <class Archive>
+    void load(Archive& ar);
 
 };

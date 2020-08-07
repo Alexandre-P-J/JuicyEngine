@@ -18,6 +18,7 @@
 #include <entt/entity/snapshot.hpp>
 #include <entt/entity/helper.hpp>
 #include <fstream>
+#include <Components/Component.h>
 #include <Components/LensComponent.h>
 #include <Components/RenderComponent.h>
 #include <Components/TransformComponent.h>
@@ -59,45 +60,48 @@ void JuicyEngine::Engine::run(Game* game_ptr) {
     systems = SystemFactory::create_all();
     game = std::shared_ptr<Game>(game_ptr);
 
+    std::ifstream is("cereal.json");
+    {
+        cereal::JSONInputArchive input {is};
+        entt::load(input, game->get_scene());
+    } 
+
+
     // TEST START
 
-    auto&& registry = game->get_scene();
-    auto camera = registry.create();
-    registry.emplace<TransformComponent>(camera);
-    registry.emplace<LensComponent>(camera);
+    //auto&& registry = game->get_scene();
+    //auto camera = registry.create();
+    //registry.emplace<TransformComponent>(camera);
+    //registry.emplace<LensComponent>(camera);
 
-    auto obj = registry.create();
-    // glm::mat4 test;
-    // bx::Vec3 eye = {0.f, 0.f, -1.f};
-    // bx::Vec3 at = {0.f, 0.f, 1.f};
-    // bx::mtxLookAt(&test[0][0], eye, at);
-    registry.emplace<TransformComponent>(obj);
+    //auto obj = registry.create();
+    //registry.emplace<TransformComponent>(obj);
 
-    PosColorVertex vertices[] = {{25.0f, 25.0f, 5.0f, 0xff0000ff},
-                                 {25.0f, -25.0f, 0.0f, 0xff00ffff},
-                                 {-25.0f, -25.0f, 0.0f, 0xffff0000},
-                                 {-25.0f, 25.0f, 0.0f, 0xff00ff00}};
-    auto verticesh = bgfx::createVertexBuffer(
-        bgfx::makeRef(vertices, sizeof(vertices)), PosColorVertex::ms_layout);
+    //PosColorVertex vertices[] = {{25.0f, 25.0f, 5.0f, 0xff0000ff},
+                                 //{25.0f, -25.0f, 0.0f, 0xff00ffff},
+                                 //{-25.0f, -25.0f, 0.0f, 0xffff0000},
+                                 //{-25.0f, 25.0f, 0.0f, 0xff00ff00}};
+    //auto verticesh = bgfx::createVertexBuffer(
+        //bgfx::makeRef(vertices, sizeof(vertices)), PosColorVertex::ms_layout);
 
-    const uint16_t indices[] = {0, 3, 2, 2, 1, 0};
-    auto indicesh =
-        bgfx::createIndexBuffer(bgfx::makeRef(indices, sizeof(indices)));
-    bgfx::ProgramHandle shaderh;
-    auto sp = ResourceManager::get_instance()->load_shader_program(
-        "basic/v_simple.bin", "basic/f_simple.bin");
-    if (sp) {
-        shaderh = sp.value();
-    }
-    else
-        spdlog::critical("Default sprite shader couldn't be loaded!");
+    //const uint16_t indices[] = {0, 3, 2, 2, 1, 0};
+    //auto indicesh =
+        //bgfx::createIndexBuffer(bgfx::makeRef(indices, sizeof(indices)));
+    //bgfx::ProgramHandle shaderh;
+    //auto sp = ResourceManager::get_instance()->load_shader_program(
+        //"basic/v_simple.bin", "basic/f_simple.bin");
+    //if (sp) {
+        //shaderh = sp.value();
+    //}
+    //else
+        //spdlog::critical("Default sprite shader couldn't be loaded!");
 
-    auto r = RenderComponent();
-    r.vertices = verticesh;
-    r.indexes = indicesh;
-    r.shader = shaderh;
-    registry.emplace<RenderComponent>(obj, r);
-    registry.emplace<SerializationComponent>(obj);
+    //auto r = RenderComponent();
+    //r.vertices = verticesh;
+    //r.indexes = indicesh;
+    //r.shader = shaderh;
+    //registry.emplace<RenderComponent>(obj, r);
+    //registry.emplace<SerializationComponent>(obj);
 
     // TEST END
     while (running) {
@@ -108,16 +112,9 @@ void JuicyEngine::Engine::run(Game* game_ptr) {
         }
     }
 
-    //std::stringstream storage;
-    std::ofstream os("cereal.json");
-    //auto vew = registry.view<TransformComponent>();
-    //for (auto& e : vew) {
-        //spdlog::warn("ENTT");
-        //registry.visit(e, [](const auto component) {spdlog::info("Visit");});
+    //std::ofstream os("cereal.json");
+    //{
+        //cereal::JSONOutputArchive output{os};
+        //entt::save(output, registry);
     //}
-    {
-        cereal::JSONOutputArchive output{os};
-        output(cereal::make_nvp("Scene", registry));
-        //entt::snapshot{registry}.component<TransformComponent>(output);
-    }
 }
