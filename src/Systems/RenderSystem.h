@@ -11,9 +11,6 @@ protected:
 
 public:
     static constexpr const char* name = "Render";
-    uint16_t width = 500, height = 500;
-    RenderSystem();
-    ~RenderSystem();
 };
 }  // namespace JuicyEngine
 

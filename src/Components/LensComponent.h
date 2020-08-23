@@ -1,12 +1,8 @@
 #pragma once
 #include <Components/Component.h>
-#include <Serialization.h>
 #include <bx/math.h>
 #include <glm/glm.hpp>
-#include <cereal/types/polymorphic.hpp>
-#include <cereal/archives/portable_binary.hpp>
-#include <cereal/archives/json.hpp>
-
+#include <Serialization.h>
 struct LensComponent : public ComponentRegistry<LensComponent> {
     static constexpr const char* name = "Lens";
     glm::mat4 projection;
@@ -19,13 +15,17 @@ struct LensComponent : public ComponentRegistry<LensComponent> {
                      view_distance, 0.f, true);
     }
 
-    template <class Archive>
-    void save(Archive& ar) const {
-        ar(cereal::make_nvp("Projection", projection));
-    }
-    template <class Archive>
-    void load(Archive& ar);
+    // template <class Archive>
+    // void save(Archive& ar) const {
+    // ar(cereal::make_nvp("Projection", projection));
+    //}
+    // template <class Archive>
+    // void load(Archive& ar);
+void save(nlohmann::json& json) const override { 
+    //json = projection; 
+}
+void load(nlohmann::json const &json) override {
+    //json.get_to(projection);
+}
 };
 
-//CEREAL_REGISTER_TYPE(LensComponent);
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Component, LensComponent);

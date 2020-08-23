@@ -1,18 +1,53 @@
 #include "ResourceManager.h"
+#include <VertexLayouts.h>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
 #include <spdlog/spdlog.h>
+#include <algorithm>
+#include <assimp/Importer.hpp>
+#include <cassert>
+#include <optional>
+#include <type_traits>
 
-namespace fs = std::filesystem;
+namespace JuicyEngine {
 
-std::shared_ptr<ResourceManager> ResourceManager::get_instance() {
-    static std::shared_ptr<ResourceManager> ptr(new ResourceManager);
-    return ptr;
+ResourceManager::ResourceManager() {
+    default_sprite = default_sprite_quad();
 }
 
-std::optional<bgfx::ShaderHandle> ResourceManager::load_shader(
-    const std::string& path) {
-    fs::path aux = fs::path(path);
-    fs::path sh_path = fs::path(data_dir) / aux.remove_filename() /
-                       get_shaders_subdir() / aux.filename();
+Resource<ResourceManager::mesh> ResourceManager::default_sprite_quad() {
+    static PosVertex vertices[] = {{25.0f, 25.0f, 0},
+                            {25.0f, -25.0f, 0},
+                            {-25.0f, -25.0f, 0},
+                            {-25.0f, 25.0f, 0}};
+    auto verticesh = bgfx::createVertexBuffer(
+        bgfx::makeRef(vertices, sizeof(vertices)), PosVertex::ms_layout);
+
+    uint16_t* indices = new uint16_t[6]{0, 3, 2, 2, 1, 0};
+    auto indicesh =
+        bgfx::createIndexBuffer(bgfx::makeRef(indices, sizeof(uint16_t)*6));
+
+    auto mesh_ptr =
+        new std::tuple<bgfx::VertexBufferHandle, bgfx::IndexBufferHandle>(
+            verticesh, indicesh);
+
+    auto&& resource = Resource<mesh>(mesh_ptr, [](auto ptr) {
+        bgfx::destroy(std::get<0>(*ptr));
+        bgfx::destroy(std::get<1>(*ptr));
+        delete ptr;
+    });
+
+    return resource;
+}
+
+Resource<bgfx::ShaderHandle> ResourceManager::load_shader(
+    const std::filesystem::path& path) {
+    if (auto resource = lookup<bgfx::ShaderHandle>(path.string())) {
+        return resource;
+    }
+    auto aux = path;
+    auto sh_path = std::filesystem::path(data_dir) / aux.remove_filename() /
+                   get_shaders_subdir() / aux.filename();
     std::ifstream file(sh_path, std::ifstream::binary);
     if (file) {
         file.seekg(0, file.end);
@@ -26,97 +61,119 @@ std::optional<bgfx::ShaderHandle> ResourceManager::load_shader(
             delete[] buffer;
             file.close();
             mem->data[mem->size - 1] = '\0';
-            bgfx::ShaderHandle handle = bgfx::createShader(mem);
-            bgfx::setName(handle, sh_path.c_str());
-            return handle;
+            auto key = path.string();
+            auto& value = resources[key];
+            auto resource = Resource<bgfx::ShaderHandle>(
+                new bgfx::ShaderHandle(bgfx::createShader(mem)),
+                [this, key](auto sh) {
+                    this->resources.erase(key);  // by key since iter may be UB
+                    bgfx::destroy(*sh);
+                    delete sh;
+                });
+            value = resource;
+            return resource;
         }
         else {
             delete[] buffer;
             spdlog::warn("Error reading " + std::string(sh_path));
-            return std::nullopt;  // file read problem
+            return Resource<bgfx::ShaderHandle>();
         }
     }
     spdlog::warn("Error opening " + std::string(sh_path));
-    return std::nullopt;  // file open problem
+    return Resource<bgfx::ShaderHandle>();
 }
 
-std::filesystem::path ResourceManager::get_shaders_subdir() {
-    std::filesystem::path subdir;
+Resource<bgfx::ProgramHandle, bgfx::ShaderHandle, bgfx::ShaderHandle>
+ResourceManager::load_program(std::filesystem::path const& vs_path,
+                              std::filesystem::path const& fs_path) {
+    std::string managed_key = vs_path.string() + ":" + fs_path.string();
+    if (auto vs_fs =
+            lookup<bgfx::ProgramHandle, bgfx::ShaderHandle, bgfx::ShaderHandle>(
+                managed_key)) {
+        return vs_fs;
+    }
+    if (auto vs = load_shader(vs_path)) {
+        if (auto fs = load_shader(fs_path)) {
+            auto& value = resources[managed_key];
+            auto resource = Resource<bgfx::ProgramHandle, bgfx::ShaderHandle,
+                                     bgfx::ShaderHandle>(
+                new bgfx::ProgramHandle(bgfx::createProgram(*vs, *fs, false)),
+                [this, managed_key](auto p) {
+                    // erase by key since iter may be UB
+                    this->resources.erase(managed_key);
+                    bgfx::destroy(*p);
+                    delete p;  // Program auto-destroys the program handler
+                },
+                vs, fs);
+            value = resource;
+            return resource;
+        }
+    }
+    spdlog::warn("Shader " + fs_path.string() + " could not be loaded.");
+    return Resource<bgfx::ProgramHandle, bgfx::ShaderHandle,
+                    bgfx::ShaderHandle>();
+}
+
+// std::shared_ptr<std::string> JuicyEngine::ResourceManager::load_text(
+// const std::string& path) {
+// auto stored = resources.find(path);
+// if (stored != resources.end()) {
+// try {
+// auto wp = std::get<std::weak_ptr<std::string>>(stored->second);
+// if (auto sp = wp.lock()) {
+// return sp;
+//}
+//} catch (const std::bad_variant_access&) {
+// spdlog::warn("Tried to load in-memory resource " + path +
+//", but it wasn't a text! Reloading from disk");
+//}
+// resources.erase(stored);
+//}
+// std::filesystem::path tx_path =
+// std::filesystem::path(data_dir) / std::filesystem::path(path);
+// std::ifstream file(tx_path);
+// if (file) {
+// std::stringstream buffer;
+// buffer << file.rdbuf();
+// file.close();
+// auto result = std::make_shared<std::string>(buffer.str());
+// resources[path] = std::variant<std::weak_ptr<std::string>>(result);
+// return result;
+//}
+// spdlog::warn(std::string(tx_path) + " couldn't be loaded.");
+// return std::shared_ptr<std::string>(nullptr);
+//}
+
+std::filesystem::path JuicyEngine::ResourceManager::get_shaders_subdir() {
+    std::string subdir;
     switch (bgfx::getRendererType()) {
         case bgfx::RendererType::Noop:
         case bgfx::RendererType::Direct3D9:
-            subdir = fs::path("dx9");
+            subdir = "dx9";
             break;
         case bgfx::RendererType::Direct3D11:
         case bgfx::RendererType::Direct3D12:
-            subdir = fs::path("dx11");
+            subdir = "dx11";
             break;
         case bgfx::RendererType::Gnm:
             break;
         case bgfx::RendererType::Metal:
-            subdir = fs::path("metal");
+            subdir = "metal";
             break;
         case bgfx::RendererType::OpenGL:
-            subdir = fs::path("glsl");
+            subdir = "glsl";
             break;
         case bgfx::RendererType::OpenGLES:
-            subdir = fs::path("essl");
+            subdir = "essl";
             break;
         case bgfx::RendererType::Vulkan:
-            subdir = fs::path("spirv");
+            subdir = "spirv";
             break;
-        case bgfx::RendererType::Count:
+        default:
             break;
     }
-    return fs::path(shaders_partial_path) / subdir;
+    return std::filesystem::path(shaders_partial_path) /
+           std::filesystem::path(subdir);
 }
 
-std::optional<bgfx::ProgramHandle> ResourceManager::load_shader_program(
-    const std::string& vs_path, const std::string& fs_path) {
-    auto vs = load_shader(vs_path);
-    if (vs) {
-        auto fs = load_shader(fs_path);
-        if (fs) {
-            bgfx::ProgramHandle shader_program =
-                bgfx::createProgram(vs.value(), fs.value());
-            return shader_program;
-        }
-        else {
-            spdlog::warn("Fragment shader " + fs_path +
-                         " could not be loaded.");
-        }
-    }
-    else {
-        spdlog::warn("Vertex shader " + vs_path + " could not be loaded.");
-    }
-    return std::nullopt;
-}
-
-std::shared_ptr<std::string> ResourceManager::load_text(
-    const std::string& path) {
-    auto stored = resources.find(path);
-    if (stored != resources.end()) {
-        try {
-            auto wp = std::get<std::weak_ptr<std::string>>(stored->second);
-            if (auto sp = wp.lock()) {
-                return sp;
-            }
-        } catch (const std::bad_variant_access&) {
-            spdlog::warn("Tried to load in-memory resource " + path +
-                         ", but it wasn't a text! Reloading from disk");
-        }
-        resources.erase(stored);
-    }
-    fs::path tx_path = fs::path(data_dir) / fs::path(path);
-    std::ifstream file(tx_path);
-    if (file) {
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        file.close();
-        auto result = std::make_shared<std::string>(buffer.str());
-        resources[path] = std::variant<std::weak_ptr<std::string>>(result);
-        return result;
-    }
-    spdlog::warn(std::string(tx_path) + " couldn't be loaded.");
-    return std::shared_ptr<std::string>(nullptr);
-}
+}  // namespace JuicyEngine

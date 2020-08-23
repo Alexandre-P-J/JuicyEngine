@@ -4,15 +4,22 @@
 #include <glm/glm.hpp>
 
 struct TransformComponent : public ComponentRegistry<TransformComponent> {
-    static constexpr const char* name = "Transform";
     glm::mat4 transform = glm::mat4(1);
     glm::vec3 get_position() const { return glm::vec3(transform[3]); }
-
-    template <class Archive>
-    void save(Archive& ar) const {
-        ar(cereal::make_nvp("Transform", transform));
+    
+    static constexpr const char* name = "Transform";
+    // template <class Archive>
+    // void save(Archive& ar) const {
+    // ar(cereal::make_nvp("Transform", transform));
+    //}
+    // template <class Archive>
+    // void load(Archive& ar);
+    void save(nlohmann::json& json) const override { 
+        json = transform;
     }
-    template <class Archive>
-    void load(Archive& ar);
+
+    void load(nlohmann::json const &json) override {
+        //json.get_to(transform);
+    }
 };
 

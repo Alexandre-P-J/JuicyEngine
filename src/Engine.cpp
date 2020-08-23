@@ -10,111 +10,123 @@
 #include <glm/glm.hpp>
 #include "ResourceManager.h"
 
-#include <sstream>
-#include <vector>
-#undef Bool // X11, ...
-#include <cereal/archives/json.hpp>
-#include <entt/entity/registry.hpp>
-#include <entt/entity/snapshot.hpp>
-#include <entt/entity/helper.hpp>
-#include <fstream>
 #include <Components/Component.h>
 #include <Components/LensComponent.h>
 #include <Components/RenderComponent.h>
-#include <Components/TransformComponent.h>
 #include <Components/SerializationComponent.h>
+#include <Components/TransformComponent.h>
 #include <Serialization.h>
+#include <entt/entity/helper.hpp>
+#include <entt/entity/registry.hpp>
+#include <entt/entity/snapshot.hpp>
+#include <fstream>
+#include <glm/glm.hpp>
+#include <nlohmann/json.hpp>
+#include <sstream>
+#include <vector>
+namespace JuicyEngine {
 
-JuicyEngine::Engine::Engine() {
+void Engine::pre_run() {
     SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_VIDEO |
              SDL_INIT_EVENTS);
     if (auto err = SDL_GetError(); err != nullptr && err[0] != '\0') {
         spdlog::warn(err);
     }
-    w_manager = std::shared_ptr<JuicyEngine::WindowManager>(
+    window_manager = std::shared_ptr<JuicyEngine::WindowManager>(
         new JuicyEngine::WindowManager());
-    i_manager = std::shared_ptr<JuicyEngine::InputManager>(
+    render_manager = std::shared_ptr<JuicyEngine::RenderManager>(
+        new JuicyEngine::RenderManager());
+    resource_manager = std::shared_ptr<JuicyEngine::ResourceManager>(
+        new JuicyEngine::ResourceManager());
+    input_manager = std::shared_ptr<JuicyEngine::InputManager>(
         new JuicyEngine::InputManager());
+    scene_manager = std::shared_ptr<JuicyEngine::SceneManager>(
+        new JuicyEngine::SceneManager());
+    systems = SystemFactory::create_all();
 }
 
-JuicyEngine::Engine::~Engine() {
+void Engine::post_run() {
     systems.clear();
-    w_manager.reset();
-    i_manager.reset();
+    scene_manager.reset();
+    input_manager.reset();
+    resource_manager.reset();
+    render_manager.reset();
+    window_manager.reset();
     SDL_Quit();
 }
 
-JuicyEngine::Engine& JuicyEngine::Engine::instance() {
+Engine& Engine::instance() {
     static auto inst = JuicyEngine::Engine();
     return inst;
 }
 
-void JuicyEngine::Engine::run(Game* game_ptr) {
-    if (running) {
-        spdlog::warn("Do not call JuicyEngine::Engine::run() multiple times!");
-        return;
-    }
-    running = true;
-    // systems should be initialized outside constructor just in case they use
-    // the instance function
-    systems = SystemFactory::create_all();
-    game = std::shared_ptr<Game>(game_ptr);
-
-    std::ifstream is("cereal.json");
+void Engine::run() {
     {
-        cereal::JSONInputArchive input {is};
-        entt::load(input, game->get_scene());
-    } 
+        if (running) {
+            spdlog::warn(
+                "Do not call JuicyEngine::Engine::run() multiple times!");
+            return;
+        }
+        running = true;
+        pre_run();
 
+        // std::ifstream is("save.json");
+        // nlohmann::json json;
+        // is >> json;
+        auto registry = entt::registry();
+        // json.get_to(registry);
 
-    // TEST START
+        // TEST START
+        auto camera = registry.create();
+        registry.emplace<TransformComponent>(camera);
+        registry.emplace<LensComponent>(camera);
+        registry.emplace<SerializationComponent>(camera);
 
-    //auto&& registry = game->get_scene();
-    //auto camera = registry.create();
-    //registry.emplace<TransformComponent>(camera);
-    //registry.emplace<LensComponent>(camera);
+        auto obj = registry.create();
+        auto& t = registry.emplace<TransformComponent>(obj);
+        t.transform = glm::scale(glm::mat4(1), glm::vec3(10, 10, 10));
 
-    //auto obj = registry.create();
-    //registry.emplace<TransformComponent>(obj);
+        // PosVertex vertices[] = {{25.0f, 25.0f, 0.0f},
+        //{25.0f, -25.0f, 0.0f},
+        //{-25.0f, -25.0f, 0.0f},
+        //{-25.0f, 25.0f, 0.0f}};
+        // auto verticesh =
+        // bgfx::createVertexBuffer(bgfx::makeRef(vertices, sizeof(vertices)),
+        // PosVertex::ms_layout);
 
-    //PosColorVertex vertices[] = {{25.0f, 25.0f, 5.0f, 0xff0000ff},
-                                 //{25.0f, -25.0f, 0.0f, 0xff00ffff},
-                                 //{-25.0f, -25.0f, 0.0f, 0xffff0000},
-                                 //{-25.0f, 25.0f, 0.0f, 0xff00ff00}};
-    //auto verticesh = bgfx::createVertexBuffer(
-        //bgfx::makeRef(vertices, sizeof(vertices)), PosColorVertex::ms_layout);
+        // const uint32_t indices[] = {0, 3, 2, 2, 1, 0};
+        // auto indicesh =
+        // bgfx::createIndexBuffer(bgfx::makeRef(indices, sizeof(indices)),
+        // BGFX_BUFFER_INDEX32);
+        auto r = resource_manager->default_sprite;  // load_mesh("plane.obj");
+        auto indicesh = std::get<1>(*r);
+        auto verticesh = std::get<0>(*r);
+        bgfx::ProgramHandle shaderh;
+        auto sp = resource_manager->load_program("basic/v_simple.bin",
+                                                 "basic/f_simple.bin");
+        if (sp) {
+            auto r = RenderComponent();
+            r.vertices = verticesh;
+            r.indexes = indicesh;
+            r.shader = sp;
+            registry.emplace<RenderComponent>(obj, r);
+        }
+        registry.emplace<SerializationComponent>(obj);
+        
+        scene_manager->set_scene(registry);
 
-    //const uint16_t indices[] = {0, 3, 2, 2, 1, 0};
-    //auto indicesh =
-        //bgfx::createIndexBuffer(bgfx::makeRef(indices, sizeof(indices)));
-    //bgfx::ProgramHandle shaderh;
-    //auto sp = ResourceManager::get_instance()->load_shader_program(
-        //"basic/v_simple.bin", "basic/f_simple.bin");
-    //if (sp) {
-        //shaderh = sp.value();
-    //}
-    //else
-        //spdlog::critical("Default sprite shader couldn't be loaded!");
-
-    //auto r = RenderComponent();
-    //r.vertices = verticesh;
-    //r.indexes = indicesh;
-    //r.shader = shaderh;
-    //registry.emplace<RenderComponent>(obj, r);
-    //registry.emplace<SerializationComponent>(obj);
-
-    // TEST END
-    while (running) {
-        i_manager->refresh_input();
-        game->update();
-        for (auto& system : systems) {
-            system->update(game->get_scene());
+        // TEST END
+        while (running) {
+            input_manager->refresh_input();
+            scene_manager->update(systems);
         }
     }
+    // nlohmann::json json;
+    // entt::to_json(json, registry);
+    // std::ofstream os("save.json");
+    // os << std::setw(4) << json << std::endl;
 
-    //std::ofstream os("cereal.json");
-    //{
-        //cereal::JSONOutputArchive output{os};
-        //entt::save(output, registry);
-    //}
+    post_run();
 }
+
+}  // namespace JuicyEngine

@@ -18,3 +18,21 @@ private:
         return layout;
     }
 };
+
+
+
+struct PosVertex {
+    float x;
+    float y;
+    float z;
+    static const bgfx::VertexLayout ms_layout;
+
+private:
+    static const bgfx::VertexLayout gen_layout() {
+        bgfx::VertexLayout layout;
+        layout.begin()
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .end();
+        return layout;
+    }
+};

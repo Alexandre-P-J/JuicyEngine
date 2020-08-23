@@ -1,6 +1,9 @@
 #pragma once
 #include <InputManager.h>
-#include <Systems/RenderSystem.h>
+#include <RenderManager.h>
+#include <ResourceManager.h>
+#include <SceneManager.h>
+#include <Systems/System.h>
 #include <WindowManager.h>
 #include <memory>
 #include "Game.h"
@@ -8,25 +11,41 @@
 namespace JuicyEngine {
 
 class Engine {
-    std::shared_ptr<JuicyEngine::WindowManager> w_manager;
-    std::shared_ptr<JuicyEngine::InputManager> i_manager;
+    std::shared_ptr<JuicyEngine::WindowManager> window_manager;
+    std::shared_ptr<JuicyEngine::RenderManager> render_manager;
+    std::shared_ptr<JuicyEngine::InputManager> input_manager;
+    std::shared_ptr<JuicyEngine::ResourceManager> resource_manager;
+    std::shared_ptr<JuicyEngine::SceneManager> scene_manager;
     std::vector<std::unique_ptr<System>> systems;
 
-    std::shared_ptr<Game> game;
     bool running = false;
 
-    Engine();
+    Engine() = default;
+    void pre_run();
+    void post_run();
 
 public:
     inline std::shared_ptr<JuicyEngine::WindowManager> get_window_manager() {
-        return w_manager;
+        return window_manager;
     }
     inline std::shared_ptr<JuicyEngine::InputManager> get_input_manager() {
-        return i_manager;
+        return input_manager;
+    }
+    inline std::shared_ptr<JuicyEngine::ResourceManager>
+    get_resource_manager() {
+        return resource_manager;
+    }
+    inline std::shared_ptr<JuicyEngine::RenderManager> get_render_manager() {
+        return render_manager;
+    }
+    inline std::shared_ptr<JuicyEngine::SceneManager> get_scene_manager() {
+        return scene_manager;
     }
     inline void exit() { running = false; }
-    ~Engine();
+
     static JuicyEngine::Engine& instance();
-    void run(Game* game);
+
+    void run();
 };
+
 }  // namespace JuicyEngine

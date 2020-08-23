@@ -16,6 +16,9 @@
 [submodule "thirdparty/EnTT"]
 	path = thirdparty/EnTT
 	url = git@github.com:skypjack/entt.git
-[submodule "thirdparty/cereal"]
-	path = thirdparty/cereal
-	url = git@github.com:USCiLab/cereal.git
+[submodule "thirdparty/json"]
+	path = thirdparty/json
+	url = git@github.com:nlohmann/json.git
+[submodule "thirdparty/assimp"]
+	path = thirdparty/assimp
+	url = git@github.com:assimp/assimp.git

@@ -4,32 +4,8 @@
 #include <Components/RenderComponent.h>
 #include <Components/TransformComponent.h>
 #include <Engine.h>
-#include <SDL.h>
 #include <bgfx/bgfx.h>
 #include <spdlog/spdlog.h>
-
-JuicyEngine::RenderSystem::RenderSystem() {
-    if (!SDL_WasInit(SDL_INIT_VIDEO)) {
-        spdlog::critical(
-            "SDL_VIDEO not initialized before RenderSystem construction");
-    }
-
-    bgfx::renderFrame();  // Render empty frame
-    bgfx::Init init;
-    init.type = bgfx::RendererType::Enum::Count;
-    init.resolution.width = width;
-    init.resolution.height = height;
-    init.resolution.reset = BGFX_RESET_VSYNC;
-    bgfx::init(init);
-
-    bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF, 1.0f,
-                       0);
-    bgfx::setViewRect(0, 0, 0, width, height);
-}
-
-JuicyEngine::RenderSystem::~RenderSystem() {
-    bgfx::shutdown();
-}
 
 void JuicyEngine::RenderSystem::update(entt::registry &scene) {
     auto cameras = scene.view<LensComponent, TransformComponent>();
@@ -51,7 +27,7 @@ void JuicyEngine::RenderSystem::update(entt::registry &scene) {
         bgfx::setIndexBuffer(render_data.indexes);
         // Uniforms [WIP]
         bgfx::setState(BGFX_STATE_DEFAULT);
-        bgfx::submit(0, render_data.shader);
+        if (render_data.shader) bgfx::submit(0, *(render_data.shader));
     }
     bgfx::frame();
 }

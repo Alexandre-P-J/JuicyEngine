@@ -27,8 +27,15 @@ add_subdirectory(sol2)
 # EnTT
 add_subdirectory(EnTT)
 
-# cereal
-option(SKIP_PORTABILITY_TEST "Skip portability (32 bit) tests" ON)
-option(SKIP_PERFORMANCE_COMPARISON "Skip building performance comparison (requires boost)" ON)
-option(JUST_INSTALL_CEREAL "Don't do anything besides installing the library" ON)
-add_subdirectory(cereal)
+# nlohmann json
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(JSON_Install OFF CACHE INTERNAL "")
+set(JSON_MultipleHeaders ON CACHE INTERNAL "")
+set(JSON_ImplicitConversions ON CACHE INTERNAL "")
+add_subdirectory(json)
+
+# Assimp
+set( ASSIMP_BUILD_TESTS  OFF CACHE INTERNAL "" )
+set( ASSIMP_INSTALL      OFF CACHE INTERNAL "" )
+set( ASSIMP_DOUBLE_PRECISION OFF CACHE INTERNAL "")
+add_subdirectory(assimp)
