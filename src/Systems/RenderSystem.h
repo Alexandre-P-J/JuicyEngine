@@ -4,13 +4,10 @@
 
 namespace JuicyEngine {
 class RenderSystem : public SystemRegistry<RenderSystem> {
-    friend class Engine;
-
-protected:
-    void update(entt::registry& scene) override;
-
 public:
     static constexpr const char* name = "Render";
+    void update(entt::registry& scene) override;
+
 };
 }  // namespace JuicyEngine
 

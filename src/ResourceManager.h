@@ -5,31 +5,33 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <nlohmann/json.hpp>
 #include <unordered_map>
 #include <variant>
-
-#ifndef SHADERS_PARTIAL_PATH
-    #define SHADERS_PARTIAL_PATH "shaders"  // fallback
-#endif
-#ifndef RESOURCES_FOLDER
-    #define RESOURCES_FOLDER "data"  // fallback
-#endif
 
 namespace JuicyEngine {
 
 class ResourceManager {
     friend class Engine;
-    using mesh = std::tuple<bgfx::VertexBufferHandle, bgfx::IndexBufferHandle>;
+    // type definitions
+    using mesh = std::pair<bgfx::VertexBufferHandle, bgfx::IndexBufferHandle>;
     using hashmap_value =
-        std::variant<ResourceHandle<bgfx::ProgramHandle, bgfx::ShaderHandle,
+        std::variant<ResourceHandle<nlohmann::json>,
+                     ResourceHandle<bgfx::ProgramHandle, bgfx::ShaderHandle,
                                     bgfx::ShaderHandle>,
                      ResourceHandle<bgfx::ShaderHandle>,
                      ResourceHandle<bgfx::TextureHandle>, ResourceHandle<mesh>,
                      std::monostate>;
+    // resource map
     std::unordered_map<std::string, hashmap_value> resources;
-    static constexpr const char *data_dir = RESOURCES_FOLDER;
-    static constexpr const char *shaders_partial_path = SHADERS_PARTIAL_PATH;
-
+    // path settings
+    static constexpr const char* resources_dir = "data";
+    static constexpr const char* shader_resources_subdir = "shaders";
+    // default mesh: plane
+    Resource<ResourceManager::mesh> default_mesh;
+    
+    ResourceManager() = default;
+    void init_default_mesh();
     std::filesystem::path
     get_shaders_subdir();  // all shaders match this partial path
 
@@ -49,15 +51,12 @@ class ResourceManager {
 
     Resource<bgfx::ShaderHandle> load_shader(
         const std::filesystem::path &shader);
-
 public:
-    ResourceManager();
-    Resource<ResourceManager::mesh> default_sprite;
+    Resource<mesh> get_default_mesh();
     Resource<bgfx::ProgramHandle, bgfx::ShaderHandle, bgfx::ShaderHandle>
     load_program(std::filesystem::path const &vs_path,
                  std::filesystem::path const &fs_path);
-    
-    Resource<mesh> default_sprite_quad();
+    Resource<nlohmann::json> load_json(std::filesystem::path const &json_path);
     // std::shared_ptr<std::string> load_text(const std::string &path);
 };
 

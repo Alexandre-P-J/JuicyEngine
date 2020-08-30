@@ -11,7 +11,7 @@ class Resource;
 template <class ResourceType, class... DependenciesTypes>
 class ResourceHandle {
     friend Resource<ResourceType, DependenciesTypes...>;
-    std::weak_ptr<ResourceType> data;
+    std::weak_ptr<const ResourceType> data;
     std::tuple<ResourceHandle<DependenciesTypes>...> deps;
 
 public:
@@ -24,12 +24,13 @@ public:
     inline operator bool() const { return bool(data.lock()); }
     // Get pointer to Resource, bool() operator should be called before this.
     inline ResourceType const &operator*() { return *(data.lock()); }
+    inline ResourceType const* operator->() {return data.lock().get();}
 };
 
 template <class ResourceType, class... DependenciesTypes>
 class Resource {
     friend ResourceHandle<ResourceType, DependenciesTypes...>;
-    std::shared_ptr<ResourceType> data;
+    std::shared_ptr<const ResourceType> data;
     std::tuple<Resource<DependenciesTypes>...> deps;
 
 public:
@@ -82,6 +83,7 @@ public:
     inline operator bool() const { return bool(data); }
     // get the resource, bool() operator should be called before this
     inline ResourceType const &operator*() { return *data; }
+    inline ResourceType const* operator->() { return data.get(); }
 };
 
 }  // namespace JuicyEngine

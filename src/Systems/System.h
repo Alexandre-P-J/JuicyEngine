@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <vector>
 #include <entt/entt.hpp>
+#include <spdlog/spdlog.h>
+#include <iostream>
 
 class System {
 public:
@@ -33,11 +35,12 @@ class SystemFactory {
         return derivedFactories;
     }
 
-    SystemFactory() {}
+    SystemFactory() = default;
 
 public:
     template <typename Derived>
     static bool registerType() {
+        std::cout << "REGISTER System" << std::endl;
         auto &factories = get_factories();
         factories.try_emplace(Derived::name, []() {
             return std::unique_ptr<System>(new Derived);

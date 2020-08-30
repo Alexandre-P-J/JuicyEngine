@@ -23,11 +23,14 @@ void JuicyEngine::RenderSystem::update(entt::registry &scene) {
         auto &render_data = objects.get<RenderComponent>(entity);
         auto &transform_data = objects.get<TransformComponent>(entity);
         bgfx::setTransform(&transform_data.transform[0][0]);
-        bgfx::setVertexBuffer(0, render_data.vertices);
-        bgfx::setIndexBuffer(render_data.indexes);
-        // Uniforms [WIP]
-        bgfx::setState(BGFX_STATE_DEFAULT);
-        if (render_data.shader) bgfx::submit(0, *(render_data.shader));
+        if (auto mesh = render_data.mesh) {
+            bgfx::setVertexBuffer(0, mesh->first);
+            bgfx::setIndexBuffer(mesh->second);
+
+            // Uniforms [WIP]
+            bgfx::setState(BGFX_STATE_DEFAULT);
+            if (auto shader = render_data.shader) bgfx::submit(0, *shader);
+        }
     }
     bgfx::frame();
 }

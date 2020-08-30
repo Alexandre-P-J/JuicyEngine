@@ -3,10 +3,8 @@
 #include <RenderManager.h>
 #include <ResourceManager.h>
 #include <SceneManager.h>
-#include <Systems/System.h>
 #include <WindowManager.h>
 #include <memory>
-#include "Game.h"
 
 namespace JuicyEngine {
 
@@ -16,7 +14,6 @@ class Engine {
     std::shared_ptr<JuicyEngine::InputManager> input_manager;
     std::shared_ptr<JuicyEngine::ResourceManager> resource_manager;
     std::shared_ptr<JuicyEngine::SceneManager> scene_manager;
-    std::vector<std::unique_ptr<System>> systems;
 
     bool running = false;
 

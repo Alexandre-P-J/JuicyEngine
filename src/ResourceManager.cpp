@@ -6,38 +6,43 @@
 #include <algorithm>
 #include <assimp/Importer.hpp>
 #include <cassert>
+#include <fstream>
 #include <optional>
 #include <type_traits>
+#include "nlohmann/json_fwd.hpp"
 
 namespace JuicyEngine {
 
-ResourceManager::ResourceManager() {
-    default_sprite = default_sprite_quad();
+Resource<ResourceManager::mesh> ResourceManager::get_default_mesh() {
+    if (!default_mesh)
+        init_default_mesh();
+    return default_mesh;
 }
 
-Resource<ResourceManager::mesh> ResourceManager::default_sprite_quad() {
-    static PosVertex vertices[] = {{25.0f, 25.0f, 0},
-                            {25.0f, -25.0f, 0},
-                            {-25.0f, -25.0f, 0},
-                            {-25.0f, 25.0f, 0}};
+void ResourceManager::init_default_mesh() {
+    PosVertex* vertices = new PosVertex[4]{{25.0f, 25.0f, 0},
+                                           {25.0f, -25.0f, 0},
+                                           {-25.0f, -25.0f, 0},
+                                           {-25.0f, 25.0f, 0}};
     auto verticesh = bgfx::createVertexBuffer(
-        bgfx::makeRef(vertices, sizeof(vertices)), PosVertex::ms_layout);
+        bgfx::makeRef(vertices, sizeof(PosVertex) * 4), PosVertex::ms_layout);
 
     uint16_t* indices = new uint16_t[6]{0, 3, 2, 2, 1, 0};
     auto indicesh =
-        bgfx::createIndexBuffer(bgfx::makeRef(indices, sizeof(uint16_t)*6));
+        bgfx::createIndexBuffer(bgfx::makeRef(indices, sizeof(uint16_t) * 6));
 
-    auto mesh_ptr =
-        new std::tuple<bgfx::VertexBufferHandle, bgfx::IndexBufferHandle>(
-            verticesh, indicesh);
+    auto mesh_ptr = new mesh(verticesh, indicesh);
 
-    auto&& resource = Resource<mesh>(mesh_ptr, [](auto ptr) {
-        bgfx::destroy(std::get<0>(*ptr));
-        bgfx::destroy(std::get<1>(*ptr));
-        delete ptr;
-    });
-
-    return resource;
+    default_mesh =
+        Resource<mesh>(mesh_ptr, [vertices, indices](auto ptr) {
+            // deallocate mesh data
+            delete[] vertices;
+            delete[] indices;
+            // destroy data handles
+            bgfx::destroy(ptr->first);
+            bgfx::destroy(ptr->second);
+            delete ptr;
+        });
 }
 
 Resource<bgfx::ShaderHandle> ResourceManager::load_shader(
@@ -46,8 +51,9 @@ Resource<bgfx::ShaderHandle> ResourceManager::load_shader(
         return resource;
     }
     auto aux = path;
-    auto sh_path = std::filesystem::path(data_dir) / aux.remove_filename() /
-                   get_shaders_subdir() / aux.filename();
+    auto sh_path = std::filesystem::path(resources_dir) /
+                   aux.remove_filename() / get_shaders_subdir() /
+                   aux.filename();
     std::ifstream file(sh_path, std::ifstream::binary);
     if (file) {
         file.seekg(0, file.end);
@@ -114,6 +120,33 @@ ResourceManager::load_program(std::filesystem::path const& vs_path,
                     bgfx::ShaderHandle>();
 }
 
+Resource<nlohmann::json> ResourceManager::load_json(
+    std::filesystem::path const& json_path) {
+    auto rpath = std::filesystem::path(resources_dir) / json_path;
+    auto managed_key = rpath.string();
+    if (auto resource = lookup<nlohmann::json>(managed_key)) {
+        spdlog::info("FOUND");
+        return resource;
+    }
+    try {
+        std::ifstream file(rpath);
+        const std::string str((std::istreambuf_iterator<char>(file)),
+                              (std::istreambuf_iterator<char>()));
+        auto json_ptr = new nlohmann::json(nlohmann::json::parse(str));
+        auto& value = resources[managed_key];
+        auto resource =
+            Resource<nlohmann::json>(json_ptr, [this, managed_key](auto ptr) {
+                this->resources.erase(managed_key);
+                delete ptr;
+            });
+        value = resource;
+        return resource;
+    } catch (const std::exception&) {
+        spdlog::warn("JSON " + managed_key + " could not be loaded.");
+        return Resource<nlohmann::json>();
+    }
+}
+
 // std::shared_ptr<std::string> JuicyEngine::ResourceManager::load_text(
 // const std::string& path) {
 // auto stored = resources.find(path);
@@ -172,7 +205,7 @@ std::filesystem::path JuicyEngine::ResourceManager::get_shaders_subdir() {
         default:
             break;
     }
-    return std::filesystem::path(shaders_partial_path) /
+    return std::filesystem::path(shader_resources_subdir) /
            std::filesystem::path(subdir);
 }
 

@@ -5,41 +5,45 @@
 #include <bgfx/bgfx.h>
 #include <vector>
 
+namespace JuicyEngine {
+
 struct RenderComponent : public ComponentRegistry<RenderComponent> {
     static constexpr const char* name = "Render";
-    bgfx::VertexBufferHandle vertices;
-    bgfx::IndexBufferHandle indexes;
-    JuicyEngine::Resource<bgfx::ProgramHandle, bgfx::ShaderHandle,
-                          bgfx::ShaderHandle>
+
+    std::filesystem::path mesh_path;
+    Resource<std::pair<bgfx::VertexBufferHandle, bgfx::IndexBufferHandle>>
+        mesh;
+
+    std::filesystem::path vs_path;
+    std::filesystem::path fs_path;
+    Resource<bgfx::ProgramHandle, bgfx::ShaderHandle, bgfx::ShaderHandle>
         shader;
+
     std::vector<bgfx::UniformHandle> uniforms;
 
-    // template <class Archive>
-    // void save(Archive& ar) const {
-    // ar(cereal::make_nvp("Render", 666));
-    //}
-    // template <class Archive>
-    // void load(Archive& ar);
-    void save(nlohmann::json& json) const override { json = 3; }
+    void save(nlohmann::json& json) const override {
+        if (!mesh_path.empty())
+            json["mesh"] = mesh_path;
+        if (!(vs_path.empty() || fs_path.empty())) {
+            json["vertex shader"] = vs_path;
+            json["fragment shader"] = fs_path;
+        }
+    }
     void load(nlohmann::json const& json) override {
-        //static PosColorVertex vert[] = {{25.0f, 25.0f, 5.0f, 0xff0000ff},
-                                        //{25.0f, -25.0f, 0.0f, 0xff00ffff},
-                                        //{-25.0f, -25.0f, 0.0f, 0xffff0000},
-                                        //{-25.0f, 25.0f, 0.0f, 0xff00ff00}};
-        //vertices = bgfx::createVertexBuffer(bgfx::makeRef(vert, sizeof(vert)),
-                                            //PosColorVertex::ms_layout);
-
-        //static const uint16_t indices[] = {0, 3, 2, 2, 1, 0};
-        //indexes =
-            //bgfx::createIndexBuffer(bgfx::makeRef(indices, sizeof(indices)));
-        //shader = JuicyEngine::Engine::instance()
-                     //.get_resource_manager()
-                     //->load_program("basic/v_simple.bin", "basic/f_simple.bin");
-        //if (!shader) {
-            //spdlog::warn("BAD SHADER");
-        //}
+        auto r_manager = Engine::instance().get_resource_manager();
+        if (json.contains("mesh")) {
+            json["mesh"].get_to(mesh_path);
+            //mesh = r_manager->load_mesh(mesh_path);
+        }
+        else
+            mesh = r_manager->get_default_mesh();
+        if (json.contains("vertex shader") && json.contains("fragment shader")) {
+            json["vertex shader"].get_to(vs_path);
+            json["fragment shader"].get_to(fs_path);
+            shader = r_manager->load_program(vs_path, fs_path); 
+        }
     }
-    ~RenderComponent() {
-        spdlog::warn("Render Component DESTROY");
-    }
+    ~RenderComponent() { spdlog::warn("Render Component DESTROY"); }
 };
+
+}  // namespace JuicyEngine

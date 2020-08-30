@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 
 # SETTINGS
-# Paths
+# Paths, do not edit
 set(RESOURCES_DIR "data" CACHE STRING "resources folder")
 set(SHADERS_SUBDIR "shaders" CACHE STRING "shaders parent folder")
 # API
@@ -34,8 +34,33 @@ file(GLOB_RECURSE ENGINE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp") # Engi
 add_library(JuicyEngine STATIC "${ENGINE_SOURCES}")
 target_include_directories(JuicyEngine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src") # Engine headers
 
-# Preprocessor
-target_compile_definitions(JuicyEngine PRIVATE RESOURCES_FOLDER="${RESOURCES_DIR}" SHADERS_PARTIAL_PATH="${SHADERS_SUBDIR}")
+# Asset compilation and packaging
+macro(PACKAGE_ASSETS RESDIR)
+    # Compile and copy vertex shaders
+    file(GLOB_RECURSE VERTEX_SHADERS "${RESDIR}/*.vert")
+    foreach(VS ${VERTEX_SHADERS})
+        file(RELATIVE_PATH RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/${RESDIR}" ${VS})
+        get_filename_component(RELATIVE ${RELATIVE} DIRECTORY)
+        add_shader(${VS} VERTEX   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/data/${RELATIVE}/shaders" DX11_MODEL 5_0 GLSL 130)
+    endforeach()
+    # Compile and copy fragment shaders
+    file(GLOB_RECURSE FRAGMENT_SHADERS "${RESDIR}/*.frag")
+    foreach(FS ${FRAGMENT_SHADERS})
+        file(RELATIVE_PATH RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/${RESDIR}" ${FS})
+        get_filename_component(RELATIVE ${RELATIVE} DIRECTORY)
+        add_shader(${FS} FRAGMENT   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/data/${RELATIVE}/shaders" DX11_MODEL 5_0 GLSL 130)
+    endforeach()
+    # Copy other resources
+    set(EXCEPTIONS ${VERTEX_SHADERS} ${FRAGMENT_SHADERS})
+    file(GLOB_RECURSE RESOURCEFILES "${RESDIR}/*")
+    list(REMOVE_ITEM RESOURCEFILES EXCEPTIONS)
+    foreach(RF ${RESOURCEFILES})
+        file(RELATIVE_PATH RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/${RESDIR}" ${RF})
+        get_filename_component(RELATIVE ${RELATIVE} DIRECTORY)
+        file(COPY ${RF} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/data/${RELATIVE}")
+    endforeach()
+endmacro()
+
 
 # Engine Linking
 if (SDL2STATIC)
