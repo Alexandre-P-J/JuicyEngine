@@ -1,5 +1,4 @@
 #include <SceneManager.h>
-
 #include <Engine.h>
 #include <Serialization.h>
 #include <spdlog/spdlog.h>
@@ -15,10 +14,10 @@ SceneManager::SceneManager(Resource<nlohmann::json> scene) {
             for (auto& element : json["systems"].items()) {
                 std::string name{element.value()};
                 // check if its a lua system (has ".lua" at the end)
-                if (name.size() > 4) {
-                    if (name.substr(name.size() - 4, 4) == ".lua") {
-                        // might be a lua system
-                    }
+                if ((name.size() > 4) &&
+                    (name.substr(name.size() - 4, 4) == ".lua")) {
+                    // might be a lua system
+                    spdlog::info("WIP " + name);
                 }
                 // check if its a C++ system
                 else if (auto system = SystemFactory::create(name)) {
@@ -35,7 +34,7 @@ SceneManager::SceneManager(Resource<nlohmann::json> scene) {
         }
         else {
             spdlog::warn(
-                "Malformed scene, scenes must have both entities and meta "
+                "Malformed scene, scenes must have both entities and systems "
                 "sections");
         }
     }

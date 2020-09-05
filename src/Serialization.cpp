@@ -1,6 +1,6 @@
 #include <Serialization.h>
 
-#include <Components/ComponentFactory.h>
+#include <Components/Component.h>
 #include <Components/SerializationComponent.h>
 #include <spdlog/spdlog.h>
 
