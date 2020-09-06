@@ -3,11 +3,14 @@
 #include <algorithm>
 #include <any>
 #include <array>
+#include <functional>
 #include <limits>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
+
+namespace JuicyEngine {
 
 /*
  * ECS that allows runtime defined components.
@@ -138,6 +141,25 @@ public:
         return result;
     }
 
+    void clear() {
+        pools.clear();
+        used_components.clear();
+        dynamic_ids.clear();
+        next_component_id = ECS_uint_min;
+        next_entity_id = ECS_uint_min;
+    }
+
+    void visit(Entity const entity,
+               std::function<void(std::string const &)> func) const {
+        for (auto const &e : dynamic_ids) {
+            auto index = used_components.get_internal_index(e.second);
+            if (pools.size() < index &&
+                pools[index].first.has(ECS_uint_t(entity))) {
+                func(e.first);
+            }
+        }
+    }
+
     template <class Component>
     Component *get(Entity entity, std::string const &component) noexcept {
         auto c_id =
@@ -148,5 +170,19 @@ public:
         if (index >= vec.size()) return nullptr;
         return &vec[index];
     }
+
+    template <class Component>
+    const Component *get(Entity entity,
+                         std::string const &component) const noexcept {
+        auto c_id =
+            used_components.get_internal_index(get_component_id(component));
+        if (c_id >= pools.size()) return nullptr;
+        auto index = pools[c_id].first.get_internal_index(ECS_uint_t(entity));
+        auto &vec =
+            std::any_cast<std::vector<Component> const &>(pools[c_id].second);
+        if (index >= vec.size()) return nullptr;
+        return &vec[index];
+    }
 };
 
+}  // namespace JuicyEngine

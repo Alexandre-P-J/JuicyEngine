@@ -43,35 +43,35 @@ void from_json(nlohmann::json const& json, glm::mat4& m) {
 
 }  // namespace glm
 
-namespace entt {
+namespace JuicyEngine {
 
 void to_json(nlohmann::json& j, const serializable_entity& e) {
     e.registry.visit(e.entity, [&j, &e](const auto component) {
-        if (component != entt::type_info<SerializationComponent>::id()) {
+        if (component != SerializationComponent::name) {
             ComponentFactory::save(j, component, e.registry, e.entity);
         }
     });
 }
 
-void to_json(nlohmann::json& json, entt::registry& registry) {
-    auto view = registry.view<SerializationComponent>();
-    for (auto& entity : view) {
+void to_json(nlohmann::json& json, Registry const& registry) {
+    auto v = registry.view(SerializationComponent::name);
+    for (auto entity : v) {
         json.push_back(serializable_entity{entity, registry});
     }
 }
 
-void from_json(const nlohmann::json& json, entt::registry& registry) {
+void from_json(const nlohmann::json& json, Registry& registry) {
     for (auto entity_obj : json) {
-        auto entity = registry.create();
-        for (auto component : entity_obj.items()) {
+        auto entity = registry.new_entity();
+        for (auto& component : entity_obj.items()) {
             auto& component_type = component.key();
             auto& component_data = component.value();
             ComponentFactory::load(component_data, component_type, registry,
                                    entity);
         }
-        registry.emplace_or_replace<SerializationComponent>(
-            entity);  // implicit
+        registry.set_component<SerializationComponent>(
+            entity, SerializationComponent::name);  // implicit
     }
 }
 
-}  // namespace entt
+}  // namespace JuicyEngine

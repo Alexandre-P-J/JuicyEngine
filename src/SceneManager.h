@@ -1,7 +1,7 @@
 #pragma once
 #include <Systems/System.h>
 #include <Systems/RenderSystem.h>
-#include <entt/entt.hpp>
+#include <Utils/ECS.h>
 #include <filesystem>
 #include <ResourceManager.h>
 
@@ -9,7 +9,7 @@ namespace JuicyEngine {
 
 class SceneManager {
     friend class Engine;
-    entt::registry current_scene;
+    Registry current_scene;
     std::vector<std::unique_ptr<System>> systems;
 
     SceneManager(Resource<nlohmann::json> scene);
@@ -19,11 +19,5 @@ class SceneManager {
 public:
     void update();
 };
-
-
-class view {
-    entt::runtime_view ecs_query;
-};
-
 
 }  // namespace JuicyEngine

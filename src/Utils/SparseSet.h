@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <vector>
 
+namespace JuicyEngine {
 
 template <typename unsigned_type>
 class SparseSet {
@@ -24,17 +25,19 @@ public:
     }
     // get size of internal array of unique naturals
     inline std::size_t size() const noexcept { return dense.size(); }
-    // get the internal array of unique naturals
+    // get an array that has all the elements in the set and nothing more. O(1)
     inline std::vector<unsigned_type> const &get_internal() const noexcept {
         return dense;
     };
-    // get the index of the internal array where the given natural is stored or
-    // ECS_id_null if its not in the set
+    // get the index the element has on get_internal() or invalid_index if
+    // isn't in the set
     inline std::size_t get_internal_index(
         unsigned_type const natural) const noexcept {
         return has(natural) ? sparse[natural] : invalid_index;
     }
 
+    // add an element to the set and return the index it occupies
+    // in get_internal()
     std::size_t put(unsigned_type const natural) noexcept {
         if (!has(natural)) {
             auto index = dense.size();
@@ -46,12 +49,13 @@ public:
         return sparse[natural];
     }
 
-    // erases an element if its in the set. It does so swapping
-    // the element to erase and the last element in the internal array,
-    // then deletes the last array element.
-    // returns the erased element old index and the old index of the element
-    // that now occupies the erased element index. If the element its not in the
-    // set returns a pair of invalid_index
+    // if the element is in the set, the last element in get_internal()
+    // will be moved to the position on get_internal() of the deleted element,
+    // then the internal array will pop its last element.
+    // returns the erased element index before deletion and the index of the
+    // element that took its place on the internal array (so the index of the
+    // last element before the deletion) Otherwise returns a pair of
+    // invalid_index
     std::pair<std::size_t, std::size_t> erase(
         unsigned_type const natural) noexcept {
         if (has(natural)) {
@@ -70,5 +74,12 @@ public:
         return (sparse.size() > natural) && (dense.size() > sparse[natural]) &&
                (dense[sparse[natural]] == natural);
     }
+
+    inline void clear() {
+        sparse.clear();
+        dense.clear();
+    }
 };
+
+}  // namespace JuicyEngine
 

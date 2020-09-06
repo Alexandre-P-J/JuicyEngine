@@ -64,8 +64,8 @@ endmacro()
 
 # Engine Linking
 if (SDL2STATIC)
-    target_link_libraries(JuicyEngine PUBLIC bgfx glm spdlog lua sol2 EnTT nlohmann_json assimp SDL2-static) # sdl2 static may be changed
+    target_link_libraries(JuicyEngine PUBLIC bgfx glm spdlog lua sol2 nlohmann_json assimp SDL2-static) # sdl2 static may be changed
 else()
 	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SDL2/include")
-        target_link_libraries(JuicyEngine PUBLIC bgfx glm spdlog lua sol2 EnTT nlohmann_json assimp SDL2)
+        target_link_libraries(JuicyEngine PUBLIC bgfx glm spdlog lua sol2 nlohmann_json assimp SDL2)
 endif()

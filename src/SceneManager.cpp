@@ -50,7 +50,7 @@ void SceneManager::load_scene(std::filesystem::path scene_path) {
 
 void SceneManager::save_scene(std::filesystem::path save_path) {
     nlohmann::json json;
-    entt::to_json(json, current_scene);
+    to_json(json, current_scene);
     try {
         std::ofstream os(save_path);
         os << std::setw(4) << json << std::endl;

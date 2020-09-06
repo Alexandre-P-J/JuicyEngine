@@ -1,6 +1,6 @@
 #pragma once
+#include <Utils/ECS.h>
 #include <spdlog/spdlog.h>
-#include <entt/entt.hpp>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -9,6 +9,10 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+
+
+
+namespace JuicyEngine {
 
 template <class T>
 void to_json(nlohmann::json &json, const T &obj) {
@@ -19,6 +23,7 @@ template <class T>
 void from_json(nlohmann::json const &json, T &obj) {
     obj.load(json);
 }
+
 
 class Component {
 public:
@@ -46,62 +51,53 @@ class ComponentFactory {
     template <class Derived>
     friend class ComponentRegistry;
 
-    using loaders_map_type =
-        std::unordered_map<std::string,
-                           std::function<void(nlohmann::json const &,
-                                              entt::registry &, entt::entity)>>;
-    static loaders_map_type &get_loaders() {
-        static loaders_map_type loaders;
-        return loaders;
-    }
+    using loader =
+        std::function<void(nlohmann::json const &, Registry &, Entity const)>;
+    using serializer =
+        std::function<void(nlohmann::json &, Registry const &, Entity const)>;
 
-    using serializers_map_type = std::unordered_map<
-        entt::id_type,
-        std::function<void(nlohmann::json &, entt::registry const &,
-                           entt::entity const)>>;
-    static serializers_map_type &get_serializers() {
-        static serializers_map_type serializers;
-        return serializers;
+    using factories_t =
+        std::unordered_map<std::string, std::pair<loader, serializer>>;
+
+    static factories_t &get_factories() {
+        static factories_t factories;
+        return factories;
     }
 
     ComponentFactory() = default;
 
     template <typename Derived>
     static bool registerType() {
-        auto &loaders = get_loaders();
-        loaders.try_emplace(
-            Derived::name,
-            [](nlohmann::json const &json, entt::registry &r, entt::entity e) {
-                auto &component = r.emplace<Derived>(e);
-                json.get_to(component);
-            });
+        loader load = [](nlohmann::json const &json, Registry &r,
+                         Entity const e) {
+            auto &component = r.set_component<Derived>(e, Derived::name);
+            json.get_to(component);
+        };
+        serializer save = [](nlohmann::json &json, Registry const &r,
+                             Entity const e) {
+            auto inst = r.get<Derived>(e, Derived::name);
+            if (inst)
+                json[inst->name] = *inst;
+        };
 
-        auto &serializers = get_serializers();
-        serializers.try_emplace(
-            entt::type_info<Derived>::id(),
-            [](nlohmann::json &json, entt::registry const &r,
-               entt::entity const e) {
-                auto const &inst = r.get<Derived>(e);
-                json[inst.name] = inst;
-            });
-
+        auto &factories = get_factories();
+        factories.try_emplace(Derived::name, std::make_pair(load, save));
         return true;
     }
 
 public:
-    static void save(nlohmann::json &json, entt::id_type const id,
-                     entt::registry const &registry,
-                     entt::entity const entity) {
-        auto &serializers = get_serializers();
-        auto it = serializers.find(id);
-        if (it != serializers.end()) it->second(json, registry, entity);
+    static void save(nlohmann::json &json, std::string const &name,
+                     Registry const &registry, Entity const entity) {
+        auto &factories = get_factories();
+        auto it = factories.find(name);
+        if (it != factories.end()) it->second.second(json, registry, entity);
     }
 
     static void load(nlohmann::json const &json, std::string const &name,
-                     entt::registry &registry, entt::entity entity) {
-        auto &loaders = get_loaders();
-        auto it = loaders.find(name);
-        if (it != loaders.end()) it->second(json, registry, entity);
+                     Registry &registry, Entity const entity) {
+        auto &factories = get_factories();
+        auto it = factories.find(name);
+        if (it != factories.end()) it->second.first(json, registry, entity);
     }
 };
 
@@ -109,3 +105,4 @@ template <typename Derived>
 bool ComponentRegistry<Derived>::dummy =
     ComponentFactory::registerType<Derived>();
 
+}  // namespace JuicyEngine

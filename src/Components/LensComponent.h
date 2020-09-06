@@ -4,6 +4,8 @@
 #include <bx/math.h>
 #include <glm/glm.hpp>
 
+namespace JuicyEngine {
+
 struct LensComponent : public ComponentRegistry<LensComponent> {
     static constexpr const char* name = "Lens";
     glm::mat4 projection;
@@ -20,3 +22,4 @@ struct LensComponent : public ComponentRegistry<LensComponent> {
     void load(nlohmann::json const& json) override { json.get_to(projection); }
 };
 
+}  // namespace JuicyEngine

@@ -3,15 +3,18 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <entt/entt.hpp>
+#include <Utils/ECS.h>
 #include <spdlog/spdlog.h>
 #include <iostream>
+
+
+namespace JuicyEngine {
 
 class System {
 public:
     virtual ~System() = default;
     virtual std::string get_name() const = 0;
-    virtual void update(entt::registry& scene) = 0;
+    virtual void update(Registry& scene) = 0;
 };
 
 template <typename Derived>
@@ -71,3 +74,4 @@ public:
 template <typename Derived>
 bool SystemRegistry<Derived>::dummy = SystemFactory::registerType<Derived>();
 
+}

@@ -1,5 +1,5 @@
 #pragma once
-#include <entt/entt.hpp>
+#include <Utils/ECS.h>
 #include <filesystem>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -97,16 +97,16 @@ void from_json(nlohmann::json const& json, glm::mat4& m);
 
 }  // namespace glm
 
-namespace entt {
+namespace JuicyEngine {
 
 struct serializable_entity {
-    entt::entity const& entity;
-    entt::registry const& registry;
+    Entity const entity;
+    Registry const& registry;
 };
 
-void to_json(nlohmann::json& json, entt::registry& registry);
+void to_json(nlohmann::json& json, Registry const& registry);
 void to_json(nlohmann::json& json, const serializable_entity& e);
 
-void from_json(const nlohmann::json& json, entt::registry& registry);
+void from_json(const nlohmann::json& json, Registry& registry);
 
-}  // namespace entt
+}  // namespace JuicyEngine
