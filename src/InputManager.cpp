@@ -1,16 +1,16 @@
 #include "InputManager.h"
 
-
-#include <SDL.h>
-#include "SDL_keyboard.h"
 #include <Engine.h>
+#include <SDL.h>
 #include <WindowManager.h>
 #include <spdlog/spdlog.h>
+#include "SDL_keyboard.h"
 
 JuicyEngine::InputManager::InputManager() {
     if (!SDL_WasInit(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER |
                      SDL_INIT_EVENTS)) {
-        spdlog::critical(
+        Logging::Engine(
+            Level::critical,
             "SDL_JOYSTICK/GAMECONTROLLER/EVENTS not initialized before "
             "InputManager construction");
     }

@@ -1,13 +1,14 @@
 #include <RenderManager.h>
 
 #include <WindowManager.h>
-#include <spdlog/spdlog.h>
+#include <Logging.h>
 
 namespace JuicyEngine {
 
 RenderManager::RenderManager() {
     if (!SDL_WasInit(SDL_INIT_VIDEO)) {
-        spdlog::critical(
+        Logging::Engine(
+            Level::critical,
             "SDL_VIDEO not initialized before RenderSystem construction");
     }
 

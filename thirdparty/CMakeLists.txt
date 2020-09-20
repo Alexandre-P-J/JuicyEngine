@@ -32,7 +32,7 @@ set(JSON_ImplicitConversions ON CACHE INTERNAL "")
 add_subdirectory(json)
 
 # Assimp
-set( ASSIMP_BUILD_TESTS  OFF CACHE INTERNAL "" )
-set( ASSIMP_INSTALL      OFF CACHE INTERNAL "" )
-set( ASSIMP_DOUBLE_PRECISION OFF CACHE INTERNAL "")
-add_subdirectory(assimp)
+#set( ASSIMP_BUILD_TESTS  OFF CACHE INTERNAL "" )
+#set( ASSIMP_INSTALL      OFF CACHE INTERNAL "" )
+#set( ASSIMP_DOUBLE_PRECISION OFF CACHE INTERNAL "")
+#add_subdirectory(assimp)

@@ -4,11 +4,13 @@
 #include <any>
 #include <array>
 #include <functional>
+#include <initializer_list>
 #include <limits>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
+#include <Logging.h>
 
 namespace JuicyEngine {
 
@@ -31,6 +33,8 @@ class Entity {
     friend Registry;
     ECS_uint_t v;
     inline Entity(ECS_uint_t i) : v(i) {}
+
+public:
     inline operator ECS_uint_t() const { return v; };
 };
 
@@ -103,15 +107,15 @@ public:
         v.pop_back();
     }
 
-    template <class... str>
     std::vector<Entity> const view(
-        str const &... component_names) const noexcept {
-        static_assert(sizeof...(component_names) > 0);
-        static_assert(
-            std::conjunction_v<std::is_convertible<str, std::string>...>);
-        std::array<ECS_uint_t, sizeof...(component_names)> c_indices{
-            used_components.get_internal_index(
-                get_component_id(component_names))...};
+        std::vector<std::string> const &component_names) const noexcept {
+        std::vector<ECS_uint_t> c_indices;
+        c_indices.reserve(component_names.size());
+        for (auto const &name : component_names) {
+            c_indices.push_back(
+                used_components.get_internal_index(get_component_id(name)));
+        }
+
         if (auto s = pools.size();
             std::any_of(c_indices.begin(), c_indices.end(),
                         [s](auto i) { return i >= s; })) {
@@ -141,6 +145,15 @@ public:
         return result;
     }
 
+    template <class... str>
+    std::vector<Entity> const view(
+        str const &... component_names) const noexcept {
+        static_assert(sizeof...(component_names) > 0);
+        static_assert(
+            std::conjunction_v<std::is_convertible<str, std::string>...>);
+        return view({component_names...});
+    }
+
     void clear() {
         pools.clear();
         used_components.clear();
@@ -153,7 +166,7 @@ public:
                std::function<void(std::string const &)> func) const {
         for (auto const &e : dynamic_ids) {
             auto index = used_components.get_internal_index(e.second);
-            if (pools.size() < index &&
+            if (pools.size() > index &&
                 pools[index].first.has(ECS_uint_t(entity))) {
                 func(e.first);
             }
@@ -166,9 +179,14 @@ public:
             used_components.get_internal_index(get_component_id(component));
         if (c_id >= pools.size()) return nullptr;
         auto index = pools[c_id].first.get_internal_index(ECS_uint_t(entity));
-        auto &vec = std::any_cast<std::vector<Component> &>(pools[c_id].second);
-        if (index >= vec.size()) return nullptr;
-        return &vec[index];
+        try {
+            auto &vec =
+                std::any_cast<std::vector<Component> &>(pools[c_id].second);
+            if (index >= vec.size()) return nullptr;
+            return &vec[index];
+        } catch (std::bad_any_cast const &) {
+            return nullptr;
+        }
     }
 
     template <class Component>
@@ -178,10 +196,14 @@ public:
             used_components.get_internal_index(get_component_id(component));
         if (c_id >= pools.size()) return nullptr;
         auto index = pools[c_id].first.get_internal_index(ECS_uint_t(entity));
-        auto &vec =
-            std::any_cast<std::vector<Component> const &>(pools[c_id].second);
-        if (index >= vec.size()) return nullptr;
-        return &vec[index];
+        try {
+            auto &vec = std::any_cast<std::vector<Component> const &>(
+                pools[c_id].second);
+            if (index >= vec.size()) return nullptr;
+            return &vec[index];
+        } catch (std::bad_any_cast const &) {
+            return nullptr;
+        }
     }
 };
 

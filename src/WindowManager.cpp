@@ -5,17 +5,19 @@
 
 JuicyEngine::WindowManager::WindowManager() {
     if (!SDL_WasInit(SDL_INIT_VIDEO)) {
-        spdlog::critical(
+        Logging::Engine(
+            Level::critical,
             "SDL_VIDEO not initialized before WindowManager construction");
     }
     window = SDL_CreateWindow("JuicyEngine", x, y, width, height, window_flags);
     if (!window) {
-        spdlog::critical("SDL2 Window creation failed.");
+        Logging::Engine(Level::critical, "SDL2 Window creation failed.");
     }
     SDL_SysWMinfo wmi;
     SDL_VERSION(&wmi.version);
     if (!SDL_GetWindowWMInfo(window, &wmi)) {
-        spdlog::critical("SDL2 window manager info query failed.");
+        Logging::Engine(Level::critical,
+                        "SDL2 window manager info query failed.");
     }
     bgfx::PlatformData pd;
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD

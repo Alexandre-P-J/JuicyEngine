@@ -18,10 +18,8 @@ namespace glm {
 // void serialize(Archive& archive, glm::vec2& v) {
 // archive(v.x, v.y);
 //}
-// template <class Archive>
-// void serialize(Archive& archive, glm::vec3& v) {
-// archive(v.x, v.y, v.z);
-//}
+void to_json(nlohmann::json& json, glm::vec3 const& v);
+void from_json(nlohmann::json const& json, glm::vec3& v);
 // template <class Archive>
 // void serialize(Archive& archive, glm::vec4& v) {
 // archive(v.x, v.y, v.z, v.w);
@@ -99,14 +97,20 @@ void from_json(nlohmann::json const& json, glm::mat4& m);
 
 namespace JuicyEngine {
 
-struct serializable_entity {
-    Entity const entity;
-    Registry const& registry;
-};
+
+template <class T>
+void to_json(nlohmann::json &json, const T &obj) {
+    obj.save(json);
+}
+
+template <class T>
+void from_json(nlohmann::json const &json, T &obj) {
+    obj.load(json);
+}
+
+
 
 void to_json(nlohmann::json& json, Registry const& registry);
-void to_json(nlohmann::json& json, const serializable_entity& e);
-
 void from_json(const nlohmann::json& json, Registry& registry);
 
 }  // namespace JuicyEngine

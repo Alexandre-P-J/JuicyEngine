@@ -5,7 +5,6 @@
 #include <Components/TransformComponent.h>
 #include <Engine.h>
 #include <bgfx/bgfx.h>
-#include <spdlog/spdlog.h>
 
 namespace JuicyEngine {
 
@@ -25,8 +24,10 @@ void JuicyEngine::RenderSystem::update(Registry &scene) {
 
     auto objects = scene.view(RenderComponent::name, TransformComponent::name);
     for (auto entity : objects) {
-        auto render_data = scene.get<RenderComponent>(entity, RenderComponent::name);
-        auto transform_data = scene.get<TransformComponent>(entity, TransformComponent::name);
+        auto render_data =
+            scene.get<RenderComponent>(entity, RenderComponent::name);
+        auto transform_data =
+            scene.get<TransformComponent>(entity, TransformComponent::name);
         bgfx::setTransform(&(transform_data->transform[0][0]));
         if (auto mesh = render_data->mesh) {
             bgfx::setVertexBuffer(0, mesh->first);
@@ -44,11 +45,11 @@ void JuicyEngine::RenderSystem::update(Registry &scene) {
 
 // void JuicyEngine::RenderSystem::resize_window(int width, int height) {
 // if (!window) {
-// spdlog::critical("Cannot resize window, window is null.");
+// Logging::Engine(Level::critical, "Cannot resize window, window is null.");
 // return;
 //}
 // if (width <= 0 || height <= 0) {
-// spdlog::critical("Cannot resize window to negative size.");
+// Logging::Engine(Level::critical, "Cannot resize window to negative size.");
 // return;
 //}
 // SDL_SetWindowSize(window, width, height);

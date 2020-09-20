@@ -43,7 +43,6 @@ struct RenderComponent : public ComponentRegistry<RenderComponent> {
             shader = r_manager->load_program(vs_path, fs_path); 
         }
     }
-    ~RenderComponent() { spdlog::warn("Render Component DESTROY"); }
 };
 
 }  // namespace JuicyEngine

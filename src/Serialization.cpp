@@ -2,7 +2,7 @@
 
 #include <Components/Component.h>
 #include <Components/SerializationComponent.h>
-#include <spdlog/spdlog.h>
+#include <Logging.h>
 
 namespace std {
 
@@ -18,6 +18,17 @@ void from_json(nlohmann::json const& json, filesystem::path& m) {
 }  // namespace std
 
 namespace glm {
+
+void to_json(nlohmann::json& json, glm::vec3 const& v) {
+    json[0] = v[0];
+    json[1] = v[1];
+    json[2] = v[2];
+}
+void from_json(nlohmann::json const& json, glm::vec3& v) {
+    v[0] = json[0];
+    v[1] = json[1];
+    v[2] = json[2];
+}
 
 void to_json(nlohmann::json& json, glm::mat4 const& m) {
     json["columns"] = {{m[0][0], m[1][0], m[2][0], m[3][0]},
@@ -45,18 +56,17 @@ void from_json(nlohmann::json const& json, glm::mat4& m) {
 
 namespace JuicyEngine {
 
-void to_json(nlohmann::json& j, const serializable_entity& e) {
-    e.registry.visit(e.entity, [&j, &e](const auto component) {
-        if (component != SerializationComponent::name) {
-            ComponentFactory::save(j, component, e.registry, e.entity);
-        }
-    });
-}
-
 void to_json(nlohmann::json& json, Registry const& registry) {
     auto v = registry.view(SerializationComponent::name);
     for (auto entity : v) {
-        json.push_back(serializable_entity{entity, registry});
+        auto& json_entity = json.emplace_back(nlohmann::json::object());
+        registry.visit(entity,
+                       [&json_entity, &registry, entity](const auto component) {
+                           if (component != SerializationComponent::name) {
+                               ComponentFactory::save(json_entity, component,
+                                                      registry, entity);
+                           }
+                       });
     }
 }
 

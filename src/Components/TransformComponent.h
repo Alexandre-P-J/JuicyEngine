@@ -8,6 +8,11 @@ namespace JuicyEngine {
 struct TransformComponent : public ComponentRegistry<TransformComponent> {
     glm::mat4 transform = glm::mat4(1);
     glm::vec3 get_position() const { return glm::vec3(transform[3]); }
+    void set_position(glm::vec3 const v) {
+        transform[3][0] = v[0];
+        transform[3][1] = v[1];
+        transform[3][2] = v[2];
+    }
 
     static constexpr const char* name = "Transform";
 
